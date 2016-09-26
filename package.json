@@ -1,0 +1,18 @@
+{
+  "name": "tarn",
+  "version": "0.1.0",
+  "description": "Simple and robust resource pool for node.js",
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha --slow 10 --timeout 5000 --reporter spec tests.js"
+  },
+  "author": "Sami Koskimäki",
+  "license": "MIT",
+  "devDependencies": {
+    "expect.js": "^0.3.1",
+    "mocha": "^3.0.2"
+  },
+  "dependencies": {
+    "bluebird": "^3.4.6"
+  }
+}
