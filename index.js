@@ -142,7 +142,7 @@ Tarn.prototype._tryAcquireNext = function () {
 
   if (this.free.length > 0) {
     this._acquireNext();
-  } else if (this.used.length + this.pendingCreates.length < this.max) {
+  } else if (this.used.length + this.pendingCreates.length < this.max && this.pendingCreates.length < this.pendingAcquires.length) {
     var self = this;
 
     this._create().promise.then(function () {
