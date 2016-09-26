@@ -618,7 +618,7 @@ describe('Tarn', function () {
 
         expect(err).to.be.a(Promise.TimeoutError);
 
-        expect(duration).to.be.greaterThan(acquireTimeoutMs - 1);
+        expect(duration).to.be.greaterThan(acquireTimeoutMs - 5);
         expect(duration - acquireTimeoutMs).to.be.lessThan(50);
 
         expect(createCalled).to.equal(5);
@@ -658,7 +658,7 @@ describe('Tarn', function () {
 
         expect(err).to.be.a(Promise.TimeoutError);
 
-        expect(duration).to.be.greaterThan(acquireTimeoutMs - 1);
+        expect(duration).to.be.greaterThan(acquireTimeoutMs - 5);
         expect(duration - acquireTimeoutMs).to.be.lessThan(50);
 
         expect(createCalled).to.equal(1);
@@ -695,7 +695,7 @@ describe('Tarn', function () {
 
         expect(err).to.be.a(Promise.TimeoutError);
 
-        expect(duration).to.be.greaterThan(acquireTimeoutMs - 1);
+        expect(duration).to.be.greaterThan(acquireTimeoutMs - 5);
         expect(duration - acquireTimeoutMs).to.be.lessThan(50);
 
         expect(createCalled).to.equal(1);
