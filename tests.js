@@ -1,8 +1,8 @@
 var Promise = require('bluebird');
-var SimplePool = require('./');
+var Tarn = require('./').Tarn;
 var expect = require('expect.js');
 
-describe('simple pool', function () {
+describe('Tarn', function () {
   var pool = null;
 
   beforeEach(function () {
@@ -17,133 +17,133 @@ describe('simple pool', function () {
 
   it('should fail if no opt.create function is given', function () {
     expect(function () {
-      pool = new SimplePool({
+      pool = new Tarn({
         destroy: function () {},
         min: 0,
         max: 1
       });
     }).to.throwException(function (err) {
-      expect(err.message).to.equal('SimplePool: opt.create function most be provided');
+      expect(err.message).to.equal('Tarn: opt.create function most be provided');
     });
   });
 
   it('should fail if no opt.destroy function is given', function () {
     expect(function () {
-      pool = new SimplePool({
+      pool = new Tarn({
         create: function () {},
         min: 0,
         max: 1
       });
     }).to.throwException(function (err) {
-      expect(err.message).to.equal('SimplePool: opt.destroy function most be provided');
+      expect(err.message).to.equal('Tarn: opt.destroy function most be provided');
     });
   });
 
   it('should fail if opt.min is missing', function () {
     expect(function () {
-      pool = new SimplePool({
+      pool = new Tarn({
         create: function () {},
         destroy: function () {},
         max: 1
       });
     }).to.throwException(function (err) {
-      expect(err.message).to.equal('SimplePool: opt.min must be an integer >= 0');
+      expect(err.message).to.equal('Tarn: opt.min must be an integer >= 0');
     });
   });
 
   it('should fail if a non-integer opt.min is given', function () {
     expect(function () {
-      pool = new SimplePool({
+      pool = new Tarn({
         create: function () {},
         destroy: function () {},
         min: '0',
         max: 1
       });
     }).to.throwException(function (err) {
-      expect(err.message).to.equal('SimplePool: opt.min must be an integer >= 0');
+      expect(err.message).to.equal('Tarn: opt.min must be an integer >= 0');
     });
   });
 
   it('should fail if a negative opt.min is given', function () {
     expect(function () {
-      pool = new SimplePool({
+      pool = new Tarn({
         create: function () {},
         destroy: function () {},
         min: -1,
         max: 1
       });
     }).to.throwException(function (err) {
-      expect(err.message).to.equal('SimplePool: opt.min must be an integer >= 0');
+      expect(err.message).to.equal('Tarn: opt.min must be an integer >= 0');
     });
   });
 
   it('should fail if opt.max is missing', function () {
     expect(function () {
-      pool = new SimplePool({
+      pool = new Tarn({
         create: function () {},
         destroy: function () {},
         min: 0
       });
     }).to.throwException(function (err) {
-      expect(err.message).to.equal('SimplePool: opt.max must be an integer > 0');
+      expect(err.message).to.equal('Tarn: opt.max must be an integer > 0');
     });
   });
 
   it('should fail if a non-integer opt.max is given', function () {
     expect(function () {
-      pool = new SimplePool({
+      pool = new Tarn({
         create: function () {},
         destroy: function () {},
         min: 0,
         max: '1'
       });
     }).to.throwException(function (err) {
-      expect(err.message).to.equal('SimplePool: opt.max must be an integer > 0');
+      expect(err.message).to.equal('Tarn: opt.max must be an integer > 0');
     });
   });
 
   it('should fail if a negative opt.max is given', function () {
     expect(function () {
-      pool = new SimplePool({
+      pool = new Tarn({
         create: function () {},
         destroy: function () {},
         min: 0,
         max: -1
       });
     }).to.throwException(function (err) {
-      expect(err.message).to.equal('SimplePool: opt.max must be an integer > 0');
+      expect(err.message).to.equal('Tarn: opt.max must be an integer > 0');
     });
   });
 
   it('should fail if a zero opt.max is given', function () {
     expect(function () {
-      pool = new SimplePool({
+      pool = new Tarn({
         create: function () {},
         destroy: function () {},
         min: 0,
         max: 0
       });
     }).to.throwException(function (err) {
-      expect(err.message).to.equal('SimplePool: opt.max must be an integer > 0');
+      expect(err.message).to.equal('Tarn: opt.max must be an integer > 0');
     });
   });
 
   it('should fail if opt.min > opt.max is given', function () {
     expect(function () {
-      pool = new SimplePool({
+      pool = new Tarn({
         create: function () {},
         destroy: function () {},
         min: 2,
         max: 1
       });
     }).to.throwException(function (err) {
-      expect(err.message).to.equal('SimplePool: opt.max is smaller than opt.min');
+      expect(err.message).to.equal('Tarn: opt.max is smaller than opt.min');
     });
   });
 
   it('should fail if a non-integer opt.acquireTimeoutMs is given', function () {
     expect(function () {
-      pool = new SimplePool({
+      pool = new Tarn({
         create: function () {},
         destroy: function () {},
         min: 2,
@@ -151,13 +151,13 @@ describe('simple pool', function () {
         acquireTimeoutMs: '10'
       });
     }).to.throwException(function (err) {
-      expect(err.message).to.equal('SimplePool: invalid opt.acquireTimeoutMs "10"');
+      expect(err.message).to.equal('Tarn: invalid opt.acquireTimeoutMs "10"');
     });
   });
 
   it('should fail if a negative opt.acquireTimeoutMs is given', function () {
     expect(function () {
-      pool = new SimplePool({
+      pool = new Tarn({
         create: function () {},
         destroy: function () {},
         min: 2,
@@ -165,13 +165,13 @@ describe('simple pool', function () {
         acquireTimeoutMs: -10
       });
     }).to.throwException(function (err) {
-      expect(err.message).to.equal('SimplePool: invalid opt.acquireTimeoutMs -10');
+      expect(err.message).to.equal('Tarn: invalid opt.acquireTimeoutMs -10');
     });
   });
 
   it('should fail if a zero opt.acquireTimeoutMs is given', function () {
     expect(function () {
-      pool = new SimplePool({
+      pool = new Tarn({
         create: function () {},
         destroy: function () {},
         min: 2,
@@ -179,13 +179,13 @@ describe('simple pool', function () {
         acquireTimeoutMs: 0
       });
     }).to.throwException(function (err) {
-      expect(err.message).to.equal('SimplePool: invalid opt.acquireTimeoutMs 0');
+      expect(err.message).to.equal('Tarn: invalid opt.acquireTimeoutMs 0');
     });
   });
 
   it('should fail if a non-integer opt.createTimeoutMs is given', function () {
     expect(function () {
-      pool = new SimplePool({
+      pool = new Tarn({
         create: function () {},
         destroy: function () {},
         min: 2,
@@ -193,13 +193,13 @@ describe('simple pool', function () {
         createTimeoutMs: '10'
       });
     }).to.throwException(function (err) {
-      expect(err.message).to.equal('SimplePool: invalid opt.createTimeoutMs "10"');
+      expect(err.message).to.equal('Tarn: invalid opt.createTimeoutMs "10"');
     });
   });
 
   it('should fail if a negative opt.createTimeoutMs is given', function () {
     expect(function () {
-      pool = new SimplePool({
+      pool = new Tarn({
         create: function () {},
         destroy: function () {},
         min: 2,
@@ -207,13 +207,13 @@ describe('simple pool', function () {
         createTimeoutMs: -10
       });
     }).to.throwException(function (err) {
-      expect(err.message).to.equal('SimplePool: invalid opt.createTimeoutMs -10');
+      expect(err.message).to.equal('Tarn: invalid opt.createTimeoutMs -10');
     });
   });
 
   it('should fail if a zero opt.createTimeoutMs is given', function () {
     expect(function () {
-      pool = new SimplePool({
+      pool = new Tarn({
         create: function () {},
         destroy: function () {},
         min: 2,
@@ -221,13 +221,13 @@ describe('simple pool', function () {
         createTimeoutMs: 0
       });
     }).to.throwException(function (err) {
-      expect(err.message).to.equal('SimplePool: invalid opt.createTimeoutMs 0');
+      expect(err.message).to.equal('Tarn: invalid opt.createTimeoutMs 0');
     });
   });
 
   it('should fail if a non-integer opt.idleTimeoutMs is given', function () {
     expect(function () {
-      pool = new SimplePool({
+      pool = new Tarn({
         create: function () {},
         destroy: function () {},
         min: 2,
@@ -235,13 +235,13 @@ describe('simple pool', function () {
         idleTimeoutMs: '10'
       });
     }).to.throwException(function (err) {
-      expect(err.message).to.equal('SimplePool: invalid opt.idleTimeoutMs "10"');
+      expect(err.message).to.equal('Tarn: invalid opt.idleTimeoutMs "10"');
     });
   });
 
   it('should fail if a negative opt.idleTimeoutMs is given', function () {
     expect(function () {
-      pool = new SimplePool({
+      pool = new Tarn({
         create: function () {},
         destroy: function () {},
         min: 2,
@@ -249,13 +249,13 @@ describe('simple pool', function () {
         idleTimeoutMs: -10
       });
     }).to.throwException(function (err) {
-      expect(err.message).to.equal('SimplePool: invalid opt.idleTimeoutMs -10');
+      expect(err.message).to.equal('Tarn: invalid opt.idleTimeoutMs -10');
     });
   });
 
   it('should fail if a zero opt.idleTimeoutMs is given', function () {
     expect(function () {
-      pool = new SimplePool({
+      pool = new Tarn({
         create: function () {},
         destroy: function () {},
         min: 2,
@@ -263,13 +263,13 @@ describe('simple pool', function () {
         idleTimeoutMs: 0
       });
     }).to.throwException(function (err) {
-      expect(err.message).to.equal('SimplePool: invalid opt.idleTimeoutMs 0');
+      expect(err.message).to.equal('Tarn: invalid opt.idleTimeoutMs 0');
     });
   });
 
   it('should fail if a non-integer opt.reapIntervalMs is given', function () {
     expect(function () {
-      pool = new SimplePool({
+      pool = new Tarn({
         create: function () {},
         destroy: function () {},
         min: 2,
@@ -277,13 +277,13 @@ describe('simple pool', function () {
         reapIntervalMs: '10'
       });
     }).to.throwException(function (err) {
-      expect(err.message).to.equal('SimplePool: invalid opt.reapIntervalMs "10"');
+      expect(err.message).to.equal('Tarn: invalid opt.reapIntervalMs "10"');
     });
   });
 
   it('should fail if a negative opt.reapIntervalMs is given', function () {
     expect(function () {
-      pool = new SimplePool({
+      pool = new Tarn({
         create: function () {},
         destroy: function () {},
         min: 2,
@@ -291,13 +291,13 @@ describe('simple pool', function () {
         reapIntervalMs: -10
       });
     }).to.throwException(function (err) {
-      expect(err.message).to.equal('SimplePool: invalid opt.reapIntervalMs -10');
+      expect(err.message).to.equal('Tarn: invalid opt.reapIntervalMs -10');
     });
   });
 
   it('should fail if a zero opt.reapIntervalMs is given', function () {
     expect(function () {
-      pool = new SimplePool({
+      pool = new Tarn({
         create: function () {},
         destroy: function () {},
         min: 2,
@@ -305,7 +305,7 @@ describe('simple pool', function () {
         reapIntervalMs: 0
       });
     }).to.throwException(function (err) {
-      expect(err.message).to.equal('SimplePool: invalid opt.reapIntervalMs 0');
+      expect(err.message).to.equal('Tarn: invalid opt.reapIntervalMs 0');
     });
   });
 
@@ -314,7 +314,7 @@ describe('simple pool', function () {
     it('should acquire opt.max resources', function () {
       var createCalled = 0;
 
-      pool = new SimplePool({
+      pool = new Tarn({
         create: function (callback) {
           var a = createCalled++;
 
@@ -347,7 +347,7 @@ describe('simple pool', function () {
       var createCalled = 0;
       var destroyCalled = 0;
 
-      pool = new SimplePool({
+      pool = new Tarn({
         create: function (callback) {
           var a = createCalled++;
 
@@ -401,7 +401,7 @@ describe('simple pool', function () {
     it('release should release a resource', function () {
       var createCalled = 0;
 
-      pool = new SimplePool({
+      pool = new Tarn({
         create: function (callback) {
           var a = createCalled++;
 
@@ -456,7 +456,7 @@ describe('simple pool', function () {
       var createCalled = 0;
       var releaseCalled = false;
 
-      pool = new SimplePool({
+      pool = new Tarn({
         create: function (callback) {
           var a = createCalled++;
 
@@ -501,7 +501,7 @@ describe('simple pool', function () {
       var createCalled = 0;
       var acquireTimeoutMs = 100;
 
-      pool = new SimplePool({
+      pool = new Tarn({
         create: function (callback) {
           var a = createCalled++;
 
@@ -548,7 +548,7 @@ describe('simple pool', function () {
       var createCalled = 0;
       var acquireTimeoutMs = 100;
 
-      pool = new SimplePool({
+      pool = new Tarn({
         create: function (callback) {
           ++createCalled;
 
@@ -588,7 +588,7 @@ describe('simple pool', function () {
       var createCalled = 0;
       var acquireTimeoutMs = 100;
 
-      pool = new SimplePool({
+      pool = new Tarn({
         create: function () {
           ++createCalled;
           throw new Error('foo');
@@ -630,7 +630,7 @@ describe('simple pool', function () {
       var destroyCalled = 0;
       var destroyed = [];
 
-      pool = new SimplePool({
+      pool = new Tarn({
         create: function (callback) {
           var a = createCalled++;
 
@@ -689,7 +689,7 @@ describe('simple pool', function () {
       var destroyCalled = 0;
       var destroyed = [];
 
-      pool = new SimplePool({
+      pool = new Tarn({
         create: function (callback) {
           var a = createCalled++;
 

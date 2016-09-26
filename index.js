@@ -1,42 +1,42 @@
 var Promise = require('bluebird');
 
-function SimplePool(opt) {
+function Tarn(opt) {
   opt = opt || {};
 
   if (!opt.create) {
-    throw new Error('SimplePool: opt.create function most be provided');
+    throw new Error('Tarn: opt.create function most be provided');
   }
 
   if (!opt.destroy) {
-    throw new Error('SimplePool: opt.destroy function most be provided');
+    throw new Error('Tarn: opt.destroy function most be provided');
   }
 
   if (typeof opt.min !== 'number' || opt.min < 0 || opt.min !== Math.round(opt.min)) {
-    throw new Error('SimplePool: opt.min must be an integer >= 0');
+    throw new Error('Tarn: opt.min must be an integer >= 0');
   }
 
   if (typeof opt.max !== 'number' || opt.max <= 0 || opt.max !== Math.round(opt.max)) {
-    throw new Error('SimplePool: opt.max must be an integer > 0');
+    throw new Error('Tarn: opt.max must be an integer > 0');
   }
 
   if (opt.min > opt.max) {
-    throw new Error('SimplePool: opt.max is smaller than opt.min');
+    throw new Error('Tarn: opt.max is smaller than opt.min');
   }
 
   if (!checkOptionalTime(opt.acquireTimeoutMs)) {
-    throw new Error('SimplePool: invalid opt.acquireTimeoutMs ' + JSON.stringify(opt.acquireTimeoutMs));
+    throw new Error('Tarn: invalid opt.acquireTimeoutMs ' + JSON.stringify(opt.acquireTimeoutMs));
   }
 
   if (!checkOptionalTime(opt.createTimeoutMs)) {
-    throw new Error('SimplePool: invalid opt.createTimeoutMs ' + JSON.stringify(opt.createTimeoutMs));
+    throw new Error('Tarn: invalid opt.createTimeoutMs ' + JSON.stringify(opt.createTimeoutMs));
   }
 
   if (!checkOptionalTime(opt.idleTimeoutMs)) {
-    throw new Error('SimplePool: invalid opt.idleTimeoutMs ' + JSON.stringify(opt.idleTimeoutMs));
+    throw new Error('Tarn: invalid opt.idleTimeoutMs ' + JSON.stringify(opt.idleTimeoutMs));
   }
 
   if (!checkOptionalTime(opt.reapIntervalMs)) {
-    throw new Error('SimplePool: invalid opt.reapIntervalMs ' + JSON.stringify(opt.reapIntervalMs));
+    throw new Error('Tarn: invalid opt.reapIntervalMs ' + JSON.stringify(opt.reapIntervalMs));
   }
 
   this.creator = opt.create;
@@ -63,23 +63,23 @@ function SimplePool(opt) {
   }, this.reapIntervalMs);
 }
 
-SimplePool.prototype.numUsed = function () {
+Tarn.prototype.numUsed = function () {
   return this.used.length;
 };
 
-SimplePool.prototype.numFree = function () {
+Tarn.prototype.numFree = function () {
   return this.free.length;
 };
 
-SimplePool.prototype.numPendingAcquires = function () {
+Tarn.prototype.numPendingAcquires = function () {
   return this.pendingAcquires.length;
 };
 
-SimplePool.prototype.numPendingCreates = function () {
+Tarn.prototype.numPendingCreates = function () {
   return this.pendingCreates.length;
 };
 
-SimplePool.prototype.acquire = function () {
+Tarn.prototype.acquire = function () {
   var self = this;
   var pendingAcquire = new PendingOperation(this.acquireTimeoutMs);
   this.pendingAcquires.push(pendingAcquire);
@@ -93,7 +93,7 @@ SimplePool.prototype.acquire = function () {
   return pendingAcquire;
 };
 
-SimplePool.prototype.release = function (resource) {
+Tarn.prototype.release = function (resource) {
   for (var i = 0, l = this.used.length; i < l; ++i) {
     var used = this.used[i];
 
@@ -108,7 +108,7 @@ SimplePool.prototype.release = function (resource) {
   return false;
 };
 
-SimplePool.prototype.check = function () {
+Tarn.prototype.check = function () {
   var timestamp = now();
   var newFree = [];
   var minKeep = this.min - this.used.length;
@@ -129,11 +129,11 @@ SimplePool.prototype.check = function () {
   this.free = newFree;
 };
 
-SimplePool.prototype.destroy = function() {
+Tarn.prototype.destroy = function() {
   clearInterval(this.interval);
 };
 
-SimplePool.prototype._tryAcquireNext = function () {
+Tarn.prototype._tryAcquireNext = function () {
   if (this.used.length >= this.max || this.pendingAcquires.length === 0) {
     // Nothing to do.
     return;
@@ -147,12 +147,12 @@ SimplePool.prototype._tryAcquireNext = function () {
     this._create().promise.then(function () {
       self._acquireNext();
     }).catch(function (err) {
-      self.log('SimplePool: resource creator threw an exception', err.stack);
+      self.log('Tarn: resource creator threw an exception', err.stack);
     });
   }
 };
 
-SimplePool.prototype._acquireNext = function () {
+Tarn.prototype._acquireNext = function () {
   while (this.free.length > 0 && this.pendingAcquires.length > 0) {
     var pendingAcquire = this.pendingAcquires.shift();
 
@@ -165,7 +165,7 @@ SimplePool.prototype._acquireNext = function () {
   }
 };
 
-SimplePool.prototype._create = function () {
+Tarn.prototype._create = function () {
   var self = this;
 
   var pendingCreate = new PendingOperation(this.createTimeoutMs);
@@ -196,11 +196,11 @@ SimplePool.prototype._create = function () {
   return pendingCreate;
 };
 
-SimplePool.prototype._destroy = function (resource) {
+Tarn.prototype._destroy = function (resource) {
   try {
     this.destroyer(resource);
   } catch (err) {
-    this.log('SimplePool: resource destroyer threw an exception', err.stack);
+    this.log('Tarn: resource destroyer threw an exception', err.stack);
   }
 };
 
@@ -265,4 +265,6 @@ function checkRequiredTime(time) {
   return typeof time === 'number' && time === Math.round(time) && time > 0;
 }
 
-module.exports = SimplePool;
+module.exports = {
+  Tarn: Tarn
+};
