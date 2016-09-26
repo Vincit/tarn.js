@@ -4,7 +4,7 @@
 
 Tarn is focused in robustness and ability to recover from errors. Tarn has timeouts for all operations
 that can fail or timeout so that you should never end up with pool full of crap. Tarn has a comprehensive
-test suite and we are committed to adding tests for each bug we encounter.
+test suite and we are committed to adding tests and fixing all bugs that are found.
 
 Tarn will always remain simple.
 
