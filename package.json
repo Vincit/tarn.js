@@ -3,11 +3,24 @@
   "version": "0.1.0",
   "description": "Simple and robust resource pool for node.js",
   "main": "index.js",
+  "license": "MIT",
   "scripts": {
     "test": "mocha --slow 10 --timeout 5000 --reporter spec tests.js"
   },
-  "author": "Sami Koskimäki",
-  "license": "MIT",
+  "author": {
+    "name": "Sami Koskimäki",
+    "email": "sami.koskimaki@vincit.com",
+    "url": "https://github.com/koskimas"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/vincit/tarn.js.git"
+  },
+  "keywords": [
+    "pool",
+    "pooling",
+    "throttle"
+  ],
   "devDependencies": {
     "expect.js": "^0.3.1",
     "mocha": "^3.0.2"
