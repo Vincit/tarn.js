@@ -752,7 +752,14 @@ describe('Tarn', function () {
         expect(pool.numUsed()).to.equal(1);
         expect(pool.numFree()).to.equal(2);
 
-        return Promise.delay(120);
+        return Promise.delay(50);
+      }).then(function () {
+
+        expect(destroyCalled).to.equal(0);
+        expect(pool.numUsed()).to.equal(1);
+        expect(pool.numFree()).to.equal(2);
+
+        return Promise.delay(60);
       }).then(function () {
         expect(destroyed).to.eql([{a: 0}, {a: 1}]);
 

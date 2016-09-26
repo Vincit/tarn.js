@@ -101,7 +101,7 @@ Tarn.prototype.release = function (resource) {
     if (used.resource === resource) {
       this.used.splice(i, 1);
       this.free.push(new FreeResource(used.resource));
-      this._acquireNext();
+      this._tryAcquireNext();
       return true;
     }
   }
