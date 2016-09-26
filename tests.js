@@ -311,7 +311,7 @@ describe('Tarn', function () {
 
   describe('acquire', function () {
 
-    it('should acquire opt.max resources', function () {
+    it('should acquire opt.max resources (async creator)', function () {
       var createCalled = 0;
 
       pool = new Tarn({
@@ -340,6 +340,93 @@ describe('Tarn', function () {
         expect(pool.numFree()).to.equal(0);
         expect(pool.numPendingAcquires()).to.equal(0);
         expect(pool.numPendingCreates()).to.equal(0);
+      });
+    });
+
+    it('should acquire opt.max resources (sync creator)', function () {
+      var createCalled = 0;
+
+      pool = new Tarn({
+        create: function (callback) {
+          callback(null, {a: createCalled++});
+        },
+        destroy: function () {},
+        min: 2,
+        max: 4
+      });
+
+      return Promise.all([
+        pool.acquire().promise,
+        pool.acquire().promise,
+        pool.acquire().promise,
+        pool.acquire().promise
+      ]).then(function (res) {
+        expect(res).to.eql([{a: 0}, {a: 1}, {a: 2}, {a: 3}]);
+
+        expect(createCalled).to.equal(4);
+        expect(pool.numUsed()).to.equal(4);
+        expect(pool.numFree()).to.equal(0);
+        expect(pool.numPendingAcquires()).to.equal(0);
+        expect(pool.numPendingCreates()).to.equal(0);
+      });
+    });
+
+    it('should acquire at max opt.max resources at a time', function () {
+      var createCalled = 0;
+      var releasesCalled = false;
+
+      pool = new Tarn({
+        create: function (callback) {
+          callback(null, {a: createCalled++});
+        },
+        destroy: function () {},
+        min: 0,
+        max: 5
+      });
+
+      return Promise.all([
+        pool.acquire().promise,
+        pool.acquire().promise,
+        pool.acquire().promise,
+        pool.acquire().promise,
+        pool.acquire().promise
+      ]).then(function (res) {
+        expect(res).to.eql([{a: 0}, {a: 1}, {a: 2}, {a: 3}, {a: 4}]);
+
+        expect(createCalled).to.equal(5);
+        expect(pool.numUsed()).to.equal(5);
+        expect(pool.numFree()).to.equal(0);
+        expect(pool.numPendingAcquires()).to.equal(0);
+        expect(pool.numPendingCreates()).to.equal(0);
+
+        var newAcquires = [
+          pool.acquire().promise,
+          pool.acquire().promise,
+          pool.acquire().promise
+        ];
+
+        expect(pool.numPendingAcquires()).to.equal(3);
+
+        setTimeout(function () {
+          pool.release(res[2]);
+          pool.release(res[3]);
+          pool.release(res[4]);
+          releasesCalled = true;
+        }, 100);
+
+        return Promise.all(newAcquires).then(function (newRes) {
+          expect(releasesCalled).to.equal(true);
+
+          expect(newRes[0] === res[2]).to.equal(true);
+          expect(newRes[1] === res[3]).to.equal(true);
+          expect(newRes[2] === res[4]).to.equal(true);
+
+          expect(createCalled).to.equal(5);
+          expect(pool.numUsed()).to.equal(5);
+          expect(pool.numFree()).to.equal(0);
+          expect(pool.numPendingAcquires()).to.equal(0);
+          expect(pool.numPendingCreates()).to.equal(0);
+        });
       });
     });
 

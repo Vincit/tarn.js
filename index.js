@@ -81,6 +81,7 @@ Tarn.prototype.numPendingCreates = function () {
 
 Tarn.prototype.acquire = function () {
   var self = this;
+
   var pendingAcquire = new PendingOperation(this.acquireTimeoutMs);
   this.pendingAcquires.push(pendingAcquire);
 
@@ -145,7 +146,7 @@ Tarn.prototype._tryAcquireNext = function () {
     var self = this;
 
     this._create().promise.then(function () {
-      self._acquireNext();
+      self._tryAcquireNext();
     }).catch(function (err) {
       self.log('Tarn: resource creator threw an exception', err.stack);
     });
@@ -171,8 +172,9 @@ Tarn.prototype._create = function () {
   var pendingCreate = new PendingOperation(this.createTimeoutMs);
   this.pendingCreates.push(pendingCreate);
 
+  // nextTick is needed to make sure the creation happens asynchronously.
   try {
-    this.creator(function (err, resource) {
+    self.creator(function (err, resource) {
       remove(self.pendingCreates, pendingCreate);
 
       if (err) {
