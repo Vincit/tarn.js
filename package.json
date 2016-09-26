@@ -21,6 +21,11 @@
     "pooling",
     "throttle"
   ],
+  "files": [
+    "README.md",
+    "LICENSE",
+    "index.js"
+  ],
   "devDependencies": {
     "expect.js": "^0.3.1",
     "mocha": "^3.0.2"
