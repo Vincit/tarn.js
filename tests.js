@@ -141,171 +141,171 @@ describe('Tarn', function () {
     });
   });
 
-  it('should fail if a non-integer opt.acquireTimeoutMs is given', function () {
+  it('should fail if a non-integer opt.acquireTimeoutMillis is given', function () {
     expect(function () {
       pool = new Tarn({
         create: function () {},
         destroy: function () {},
         min: 2,
         max: 10,
-        acquireTimeoutMs: '10'
+        acquireTimeoutMillis: '10'
       });
     }).to.throwException(function (err) {
-      expect(err.message).to.equal('Tarn: invalid opt.acquireTimeoutMs "10"');
+      expect(err.message).to.equal('Tarn: invalid opt.acquireTimeoutMillis "10"');
     });
   });
 
-  it('should fail if a negative opt.acquireTimeoutMs is given', function () {
+  it('should fail if a negative opt.acquireTimeoutMillis is given', function () {
     expect(function () {
       pool = new Tarn({
         create: function () {},
         destroy: function () {},
         min: 2,
         max: 10,
-        acquireTimeoutMs: -10
+        acquireTimeoutMillis: -10
       });
     }).to.throwException(function (err) {
-      expect(err.message).to.equal('Tarn: invalid opt.acquireTimeoutMs -10');
+      expect(err.message).to.equal('Tarn: invalid opt.acquireTimeoutMillis -10');
     });
   });
 
-  it('should fail if a zero opt.acquireTimeoutMs is given', function () {
+  it('should fail if a zero opt.acquireTimeoutMillis is given', function () {
     expect(function () {
       pool = new Tarn({
         create: function () {},
         destroy: function () {},
         min: 2,
         max: 10,
-        acquireTimeoutMs: 0
+        acquireTimeoutMillis: 0
       });
     }).to.throwException(function (err) {
-      expect(err.message).to.equal('Tarn: invalid opt.acquireTimeoutMs 0');
+      expect(err.message).to.equal('Tarn: invalid opt.acquireTimeoutMillis 0');
     });
   });
 
-  it('should fail if a non-integer opt.createTimeoutMs is given', function () {
+  it('should fail if a non-integer opt.createTimeoutMillis is given', function () {
     expect(function () {
       pool = new Tarn({
         create: function () {},
         destroy: function () {},
         min: 2,
         max: 10,
-        createTimeoutMs: '10'
+        createTimeoutMillis: '10'
       });
     }).to.throwException(function (err) {
-      expect(err.message).to.equal('Tarn: invalid opt.createTimeoutMs "10"');
+      expect(err.message).to.equal('Tarn: invalid opt.createTimeoutMillis "10"');
     });
   });
 
-  it('should fail if a negative opt.createTimeoutMs is given', function () {
+  it('should fail if a negative opt.createTimeoutMillis is given', function () {
     expect(function () {
       pool = new Tarn({
         create: function () {},
         destroy: function () {},
         min: 2,
         max: 10,
-        createTimeoutMs: -10
+        createTimeoutMillis: -10
       });
     }).to.throwException(function (err) {
-      expect(err.message).to.equal('Tarn: invalid opt.createTimeoutMs -10');
+      expect(err.message).to.equal('Tarn: invalid opt.createTimeoutMillis -10');
     });
   });
 
-  it('should fail if a zero opt.createTimeoutMs is given', function () {
+  it('should fail if a zero opt.createTimeoutMillis is given', function () {
     expect(function () {
       pool = new Tarn({
         create: function () {},
         destroy: function () {},
         min: 2,
         max: 10,
-        createTimeoutMs: 0
+        createTimeoutMillis: 0
       });
     }).to.throwException(function (err) {
-      expect(err.message).to.equal('Tarn: invalid opt.createTimeoutMs 0');
+      expect(err.message).to.equal('Tarn: invalid opt.createTimeoutMillis 0');
     });
   });
 
-  it('should fail if a non-integer opt.idleTimeoutMs is given', function () {
+  it('should fail if a non-integer opt.idleTimeoutMillis is given', function () {
     expect(function () {
       pool = new Tarn({
         create: function () {},
         destroy: function () {},
         min: 2,
         max: 10,
-        idleTimeoutMs: '10'
+        idleTimeoutMillis: '10'
       });
     }).to.throwException(function (err) {
-      expect(err.message).to.equal('Tarn: invalid opt.idleTimeoutMs "10"');
+      expect(err.message).to.equal('Tarn: invalid opt.idleTimeoutMillis "10"');
     });
   });
 
-  it('should fail if a negative opt.idleTimeoutMs is given', function () {
+  it('should fail if a negative opt.idleTimeoutMillis is given', function () {
     expect(function () {
       pool = new Tarn({
         create: function () {},
         destroy: function () {},
         min: 2,
         max: 10,
-        idleTimeoutMs: -10
+        idleTimeoutMillis: -10
       });
     }).to.throwException(function (err) {
-      expect(err.message).to.equal('Tarn: invalid opt.idleTimeoutMs -10');
+      expect(err.message).to.equal('Tarn: invalid opt.idleTimeoutMillis -10');
     });
   });
 
-  it('should fail if a zero opt.idleTimeoutMs is given', function () {
+  it('should fail if a zero opt.idleTimeoutMillis is given', function () {
     expect(function () {
       pool = new Tarn({
         create: function () {},
         destroy: function () {},
         min: 2,
         max: 10,
-        idleTimeoutMs: 0
+        idleTimeoutMillis: 0
       });
     }).to.throwException(function (err) {
-      expect(err.message).to.equal('Tarn: invalid opt.idleTimeoutMs 0');
+      expect(err.message).to.equal('Tarn: invalid opt.idleTimeoutMillis 0');
     });
   });
 
-  it('should fail if a non-integer opt.reapIntervalMs is given', function () {
+  it('should fail if a non-integer opt.reapIntervalMillis is given', function () {
     expect(function () {
       pool = new Tarn({
         create: function () {},
         destroy: function () {},
         min: 2,
         max: 10,
-        reapIntervalMs: '10'
+        reapIntervalMillis: '10'
       });
     }).to.throwException(function (err) {
-      expect(err.message).to.equal('Tarn: invalid opt.reapIntervalMs "10"');
+      expect(err.message).to.equal('Tarn: invalid opt.reapIntervalMillis "10"');
     });
   });
 
-  it('should fail if a negative opt.reapIntervalMs is given', function () {
+  it('should fail if a negative opt.reapIntervalMillis is given', function () {
     expect(function () {
       pool = new Tarn({
         create: function () {},
         destroy: function () {},
         min: 2,
         max: 10,
-        reapIntervalMs: -10
+        reapIntervalMillis: -10
       });
     }).to.throwException(function (err) {
-      expect(err.message).to.equal('Tarn: invalid opt.reapIntervalMs -10');
+      expect(err.message).to.equal('Tarn: invalid opt.reapIntervalMillis -10');
     });
   });
 
-  it('should fail if a zero opt.reapIntervalMs is given', function () {
+  it('should fail if a zero opt.reapIntervalMillis is given', function () {
     expect(function () {
       pool = new Tarn({
         create: function () {},
         destroy: function () {},
         min: 2,
         max: 10,
-        reapIntervalMs: 0
+        reapIntervalMillis: 0
       });
     }).to.throwException(function (err) {
-      expect(err.message).to.equal('Tarn: invalid opt.reapIntervalMs 0');
+      expect(err.message).to.equal('Tarn: invalid opt.reapIntervalMillis 0');
     });
   });
 
@@ -321,6 +321,34 @@ describe('Tarn', function () {
           setTimeout(function () {
             callback(null, {a: a});
           }, 10);
+        },
+        destroy: function () {},
+        min: 2,
+        max: 4
+      });
+
+      return Promise.all([
+        pool.acquire().promise,
+        pool.acquire().promise,
+        pool.acquire().promise,
+        pool.acquire().promise
+      ]).then(function (res) {
+        expect(res).to.eql([{a: 0}, {a: 1}, {a: 2}, {a: 3}]);
+
+        expect(createCalled).to.equal(4);
+        expect(pool.numUsed()).to.equal(4);
+        expect(pool.numFree()).to.equal(0);
+        expect(pool.numPendingAcquires()).to.equal(0);
+        expect(pool.numPendingCreates()).to.equal(0);
+      });
+    });
+
+    it('should acquire opt.max resources (promise creator)', function () {
+      var createCalled = 0;
+
+      pool = new Tarn({
+        create: function () {
+          return Promise.resolve({a: createCalled++}).delay(50);
         },
         destroy: function () {},
         min: 2,
@@ -481,6 +509,66 @@ describe('Tarn', function () {
       }).catch(done);
     });
 
+    it('should validate resources using opt.validate before acquiring', function () {
+      var createCalled = 0;
+      var destroyCalled = 0;
+      var destroyed = null;
+
+      pool = new Tarn({
+        create: function (callback) {
+          callback(null, {a: createCalled++, n: 0});
+        },
+        validate: function (resource) {
+          return resource.a !== 0 || resource.n === 0;
+        },
+        destroy: function (resource) {
+          ++destroyCalled;
+          destroyed = resource;
+        },
+        min: 0,
+        max: 2
+      });
+
+      return Promise.all([
+        acquire(),
+        acquire()
+      ]).then(function (res) {
+        expect(res).to.eql([{a: 0, n: 1}, {a: 1, n: 1}]);
+
+        expect(createCalled).to.equal(2);
+        expect(destroyCalled).to.equal(0);
+        expect(pool.numUsed()).to.equal(2);
+        expect(pool.numFree()).to.equal(0);
+        expect(pool.numPendingAcquires()).to.equal(0);
+        expect(pool.numPendingCreates()).to.equal(0);
+
+        pool.release(res[0]);
+        pool.release(res[1]);
+
+        return Promise.all([
+          acquire(),
+          acquire()
+        ]);
+      }).then(function (res) {
+        expect(res).to.eql([{a: 1, n: 2}, {a: 2, n: 1}]);
+
+        expect(createCalled).to.equal(3);
+        expect(destroyCalled).to.equal(1);
+        expect(destroyed).to.eql({a: 0, n: 1});
+        expect(pool.numUsed()).to.equal(2);
+        expect(pool.numFree()).to.equal(0);
+        expect(pool.numPendingAcquires()).to.equal(0);
+        expect(pool.numPendingCreates()).to.equal(0);
+      });
+
+      function acquire() {
+        return pool.acquire().promise.then(function (resource) {
+          ++resource.n;
+          return resource;
+        });
+      }
+    });
+
   });
 
   describe('release', function () {
@@ -584,9 +672,9 @@ describe('Tarn', function () {
 
   describe('acquireTimeout', function () {
 
-    it('should acquire fail to acquire opt.max + 1 resources after acquireTimeoutMs', function (done) {
+    it('should acquire fail to acquire opt.max + 1 resources after acquireTimeoutMillis', function (done) {
       var createCalled = 0;
-      var acquireTimeoutMs = 100;
+      var acquireTimeoutMillis = 100;
 
       pool = new Tarn({
         create: function (callback) {
@@ -599,7 +687,7 @@ describe('Tarn', function () {
         destroy: function () {},
         min: 2,
         max: 5,
-        acquireTimeoutMs: acquireTimeoutMs
+        acquireTimeoutMillis: acquireTimeoutMillis
       });
 
       var now = Date.now();
@@ -618,8 +706,8 @@ describe('Tarn', function () {
 
         expect(err).to.be.a(Promise.TimeoutError);
 
-        expect(duration).to.be.greaterThan(acquireTimeoutMs - 5);
-        expect(duration - acquireTimeoutMs).to.be.lessThan(50);
+        expect(duration).to.be.greaterThan(acquireTimeoutMillis - 5);
+        expect(duration - acquireTimeoutMillis).to.be.lessThan(50);
 
         expect(createCalled).to.equal(5);
         expect(pool.numUsed()).to.equal(5);
@@ -631,9 +719,9 @@ describe('Tarn', function () {
       }).catch(done);
     });
 
-    it('should recover after acquireTimeoutMs if the create function returns an error', function (done) {
+    it('should recover after acquireTimeoutMillis if the create function returns an error', function (done) {
       var createCalled = 0;
-      var acquireTimeoutMs = 100;
+      var acquireTimeoutMillis = 100;
 
       pool = new Tarn({
         create: function (callback) {
@@ -646,7 +734,7 @@ describe('Tarn', function () {
         destroy: function () {},
         min: 2,
         max: 4,
-        acquireTimeoutMs: acquireTimeoutMs
+        acquireTimeoutMillis: acquireTimeoutMillis
       });
 
       var now = Date.now();
@@ -658,8 +746,8 @@ describe('Tarn', function () {
 
         expect(err).to.be.a(Promise.TimeoutError);
 
-        expect(duration).to.be.greaterThan(acquireTimeoutMs - 5);
-        expect(duration - acquireTimeoutMs).to.be.lessThan(50);
+        expect(duration).to.be.greaterThan(acquireTimeoutMillis - 5);
+        expect(duration - acquireTimeoutMillis).to.be.lessThan(50);
 
         expect(createCalled).to.equal(1);
         expect(pool.numUsed()).to.equal(0);
@@ -671,9 +759,9 @@ describe('Tarn', function () {
       }).catch(done);
     });
 
-    it('should recover after acquireTimeoutMs if the create function throws an error', function (done) {
+    it('should recover after acquireTimeoutMillis if the create function throws an error', function (done) {
       var createCalled = 0;
-      var acquireTimeoutMs = 100;
+      var acquireTimeoutMillis = 100;
 
       pool = new Tarn({
         create: function () {
@@ -683,7 +771,7 @@ describe('Tarn', function () {
         destroy: function () {},
         min: 2,
         max: 4,
-        acquireTimeoutMs: acquireTimeoutMs
+        acquireTimeoutMillis: acquireTimeoutMillis
       });
 
       var now = Date.now();
@@ -695,8 +783,8 @@ describe('Tarn', function () {
 
         expect(err).to.be.a(Promise.TimeoutError);
 
-        expect(duration).to.be.greaterThan(acquireTimeoutMs - 5);
-        expect(duration - acquireTimeoutMs).to.be.lessThan(50);
+        expect(duration).to.be.greaterThan(acquireTimeoutMillis - 5);
+        expect(duration - acquireTimeoutMillis).to.be.lessThan(50);
 
         expect(createCalled).to.equal(1);
         expect(pool.numUsed()).to.equal(0);
@@ -710,9 +798,9 @@ describe('Tarn', function () {
 
   });
 
-  describe('idleTimeoutMs', function () {
+  describe('idleTimeoutMillis', function () {
 
-    it('should remove idle resources after idleTimeoutMs', function (done) {
+    it('should remove idle resources after idleTimeoutMillis', function (done) {
       var createCalled = 0;
       var destroyCalled = 0;
       var destroyed = [];
@@ -731,8 +819,8 @@ describe('Tarn', function () {
         },
         min: 0,
         max: 4,
-        idleTimeoutMs: 100,
-        reapIntervalMs: 10
+        idleTimeoutMillis: 100,
+        reapIntervalMillis: 10
       });
 
       Promise.all([
@@ -790,8 +878,8 @@ describe('Tarn', function () {
         },
         min: 2,
         max: 4,
-        idleTimeoutMs: 100,
-        reapIntervalMs: 10
+        idleTimeoutMillis: 100,
+        reapIntervalMillis: 10
       });
 
       Promise.all([

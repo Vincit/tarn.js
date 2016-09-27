@@ -1,4 +1,5 @@
 var Promise = require('bluebird');
+var RECURSION_LIMIT = 100;
 
 function Tarn(opt) {
   opt = opt || {};
@@ -23,30 +24,31 @@ function Tarn(opt) {
     throw new Error('Tarn: opt.max is smaller than opt.min');
   }
 
-  if (!checkOptionalTime(opt.acquireTimeoutMs)) {
-    throw new Error('Tarn: invalid opt.acquireTimeoutMs ' + JSON.stringify(opt.acquireTimeoutMs));
+  if (!checkOptionalTime(opt.acquireTimeoutMillis)) {
+    throw new Error('Tarn: invalid opt.acquireTimeoutMillis ' + JSON.stringify(opt.acquireTimeoutMillis));
   }
 
-  if (!checkOptionalTime(opt.createTimeoutMs)) {
-    throw new Error('Tarn: invalid opt.createTimeoutMs ' + JSON.stringify(opt.createTimeoutMs));
+  if (!checkOptionalTime(opt.createTimeoutMillis)) {
+    throw new Error('Tarn: invalid opt.createTimeoutMillis ' + JSON.stringify(opt.createTimeoutMillis));
   }
 
-  if (!checkOptionalTime(opt.idleTimeoutMs)) {
-    throw new Error('Tarn: invalid opt.idleTimeoutMs ' + JSON.stringify(opt.idleTimeoutMs));
+  if (!checkOptionalTime(opt.idleTimeoutMillis)) {
+    throw new Error('Tarn: invalid opt.idleTimeoutMillis ' + JSON.stringify(opt.idleTimeoutMillis));
   }
 
-  if (!checkOptionalTime(opt.reapIntervalMs)) {
-    throw new Error('Tarn: invalid opt.reapIntervalMs ' + JSON.stringify(opt.reapIntervalMs));
+  if (!checkOptionalTime(opt.reapIntervalMillis)) {
+    throw new Error('Tarn: invalid opt.reapIntervalMillis ' + JSON.stringify(opt.reapIntervalMillis));
   }
 
   this.creator = opt.create;
   this.destroyer = opt.destroy;
+  this.validate = typeof opt.validate === 'function' ? opt.validate : function () { return true; };
   this.log = opt.log || function () {};
 
-  this.acquireTimeoutMs = opt.acquireTimeoutMs || 30000;
-  this.createTimeoutMs = opt.createTimeoutMs || 30000;
-  this.idleTimeoutMs = opt.idleTimeoutMs || 30000;
-  this.reapIntervalMs = opt.reapIntervalMs || 1000;
+  this.acquireTimeoutMillis = opt.acquireTimeoutMillis || 30000;
+  this.createTimeoutMillis = opt.createTimeoutMillis || 30000;
+  this.idleTimeoutMillis = opt.idleTimeoutMillis || 30000;
+  this.reapIntervalMillis = opt.reapIntervalMillis || 1000;
 
   this.min = opt.min;
   this.max = opt.max;
@@ -60,7 +62,7 @@ function Tarn(opt) {
   var self = this;
   this.interval = setInterval(function () {
     self.check();
-  }, this.reapIntervalMs);
+  }, this.reapIntervalMillis);
 }
 
 Tarn.prototype.numUsed = function () {
@@ -82,7 +84,7 @@ Tarn.prototype.numPendingCreates = function () {
 Tarn.prototype.acquire = function () {
   var self = this;
 
-  var pendingAcquire = new PendingOperation(this.acquireTimeoutMs);
+  var pendingAcquire = new PendingOperation(this.acquireTimeoutMillis);
   this.pendingAcquires.push(pendingAcquire);
 
   pendingAcquire.promise = pendingAcquire.promise.catch(function (err) {
@@ -90,7 +92,7 @@ Tarn.prototype.acquire = function () {
     return Promise.reject(err);
   });
 
-  this._tryAcquireNext();
+  this._tryAcquireNext(0);
   return pendingAcquire;
 };
 
@@ -101,7 +103,7 @@ Tarn.prototype.release = function (resource) {
     if (used.resource === resource) {
       this.used.splice(i, 1);
       this.free.push(new FreeResource(used.resource));
-      this._tryAcquireNext();
+      this._tryAcquireNext(0);
       return true;
     }
   }
@@ -119,7 +121,7 @@ Tarn.prototype.check = function () {
   for (var i = 0, li = this.free.length; i < li; ++i) {
     var free = this.free[i];
 
-    if (duration(timestamp, free.timestamp) > this.idleTimeoutMs && numDestroyed < maxDestroy) {
+    if (duration(timestamp, free.timestamp) > this.idleTimeoutMillis && numDestroyed < maxDestroy) {
       numDestroyed++;
       this._destroy(free.resource);
     } else {
@@ -134,66 +136,78 @@ Tarn.prototype.destroy = function() {
   clearInterval(this.interval);
 };
 
-Tarn.prototype._tryAcquireNext = function () {
-  if (this.used.length >= this.max || this.pendingAcquires.length === 0) {
+Tarn.prototype._tryAcquireNext = function (recursion) {
+  recursion = (recursion || 0) + 1;
+
+  if (this.used.length >= this.max || this.pendingAcquires.length === 0 || recursion > RECURSION_LIMIT) {
     // Nothing to do.
     return;
   }
 
   if (this.free.length > 0) {
-    this._acquireNext();
+    this._acquireNext(recursion);
   } else if (this.used.length + this.pendingCreates.length < this.max && this.pendingCreates.length < this.pendingAcquires.length) {
     var self = this;
 
     this._create().promise.then(function () {
-      self._tryAcquireNext();
+      self._tryAcquireNext(recursion);
     }).catch(function (err) {
-      self.log('Tarn: resource creator threw an exception', err.stack);
+      self.log('Tarn: resource creator threw an exception ' + err.stack, 'warn');
     });
   }
 };
 
-Tarn.prototype._acquireNext = function () {
+Tarn.prototype._acquireNext = function (recursion) {
   while (this.free.length > 0 && this.pendingAcquires.length > 0) {
-    var pendingAcquire = this.pendingAcquires.shift();
+    var pendingAcquire = this.pendingAcquires[0];
+    var free = this.free[0];
 
-    if (!pendingAcquire.isRejected()) {
-      var free = this.free.shift();
-
-      this.used.push(new UsedResource(free.resource));
-      pendingAcquire._resolve(free.resource);
+    if (pendingAcquire.isRejected()) {
+      this.pendingAcquires.shift();
+      continue;
     }
+
+    if (!this.validate(free.resource)) {
+      this.free.shift();
+      this._destroy(free.resource);
+      continue;
+    }
+
+    this.pendingAcquires.shift();
+    this.free.shift();
+
+    this.used.push(new UsedResource(free.resource));
+    pendingAcquire._resolve(free.resource);
+  }
+
+  // If we destroyed invalid resources, we may need to create new ones.
+  if (this.pendingAcquires.length > this.pendingCreates.length) {
+    this._tryAcquireNext(recursion);
   }
 };
 
 Tarn.prototype._create = function () {
   var self = this;
 
-  var pendingCreate = new PendingOperation(this.createTimeoutMs);
+  var pendingCreate = new PendingOperation(this.createTimeoutMillis);
   this.pendingCreates.push(pendingCreate);
 
-  // nextTick is needed to make sure the creation happens asynchronously.
-  try {
-    self.creator(function (err, resource) {
-      remove(self.pendingCreates, pendingCreate);
-
-      if (err) {
-        pendingCreate._reject(err);
-      } else {
-        if (pendingCreate.isRejected()) {
-          // This happens if the pending operation times out or is aborted. In any case,
-          // we need to destroy the resource since no-one will ever use it.
-          this._destroy(resource);
-        } else {
-          self.free.push(new FreeResource(resource));
-          pendingCreate._resolve(resource);
-        }
-      }
-    });
-  } catch (err) {
+  callbackOrPromise(self.creator, []).then(function (resource) {
     remove(self.pendingCreates, pendingCreate);
+
+    if (pendingCreate.isRejected()) {
+      // This happens if the pending operation times out or is aborted. In any case,
+      // we need to destroy the resource since no-one will ever use it.
+      this._destroy(resource);
+    } else {
+      self.free.push(new FreeResource(resource));
+      pendingCreate._resolve(resource);
+    }
+  }).catch(function (err) {
+    remove(self.pendingCreates, pendingCreate);
+
     pendingCreate._reject(err);
-  }
+  });
 
   return pendingCreate;
 };
@@ -202,7 +216,7 @@ Tarn.prototype._destroy = function (resource) {
   try {
     this.destroyer(resource);
   } catch (err) {
-    this.log('Tarn: resource destroyer threw an exception', err.stack);
+    this.log('Tarn: resource destroyer threw an exception ' + err.stack, 'warn');
   }
 };
 
@@ -265,6 +279,26 @@ function checkOptionalTime(time) {
 
 function checkRequiredTime(time) {
   return typeof time === 'number' && time === Math.round(time) && time > 0;
+}
+
+function callbackOrPromise(func, args) {
+  return new Promise(function (resolve, reject) {
+    args.push(function (err, resource) {
+      if (err) {
+        reject(err);
+      } else {
+        resolve(resource);
+      }
+    });
+
+    Promise.try(function () {
+      return func.apply(undefined, args);
+    }).then(function (res) {
+      if (res) {
+        resolve(res);
+      }
+    }).catch(reject);
+  });
 }
 
 module.exports = {

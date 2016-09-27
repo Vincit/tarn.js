@@ -21,12 +21,22 @@ const Tarn = require('tarn').Tarn;
 
 const pool = new Tarn({
 
-  // function that creates a resource
+  // function that creates a resource. You can either pass the resource
+  // to the callback or return a promise that resolves the resource
+  // (but not both).
   create: (cb) => {
     cb(null, new SomeResource());
   },
   
-  // function that destroys a resource
+  // validates a connection before it is used. Return true or false
+  // from it. If false is returned, the resource is destroyed and a
+  // another one is acquired.
+  validate: (resource) {
+    return true;
+  },
+  
+  // function that destroys a resource. This is always synchronous
+  // as nothing waits for the return value.
   destroy: (someResource) => {
     someResource.cleanup();
   },
@@ -39,17 +49,17 @@ const pool = new Tarn({
   
   // acquire promises are rejected after this many milliseconds
   // if a resource cannot be acquired
-  acquireTimeoutMs: 30000,
+  acquireTimeoutMillis: 30000,
   
   // create operations are cancelled after this many milliseconds
   // if a resource cannot be acquired
-  createTimeoutMs: 30000,
+  createTimeoutMillis: 30000,
   
   // free resouces are destroyed after this many milliseconds
-  idleTimeoutMs: 30000,
+  idleTimeoutMillis: 30000,
   
   // how often to check for idle resources to destroy
-  reapIntervalMs: 1000
+  reapIntervalMillis: 1000
 });
 
 pool.acquire().promise.then(someResource => {

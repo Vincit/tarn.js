@@ -5,7 +5,8 @@
   "main": "index.js",
   "license": "MIT",
   "scripts": {
-    "test": "mocha --slow 10 --timeout 5000 --reporter spec tests.js"
+    "test": "mocha --slow 10 --timeout 5000 --reporter spec tests.js",
+    "test-bail": "mocha --slow 10 --timeout 5000 --reporter spec --bail tests.js"
   },
   "author": {
     "name": "Sami Koskimäki",
