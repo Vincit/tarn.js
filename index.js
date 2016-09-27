@@ -302,5 +302,7 @@ function callbackOrPromise(func, args) {
 }
 
 module.exports = {
-  Tarn: Tarn
+  Tarn: Tarn,
+  Promise: Promise,
+  TimeOutError: Promise.TimeoutError
 };
