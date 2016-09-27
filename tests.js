@@ -11,7 +11,7 @@ describe('Tarn', function () {
 
   afterEach(function () {
     if (pool) {
-      pool.destroy();
+      return pool.destroy();
     }
   });
 

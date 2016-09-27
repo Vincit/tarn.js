@@ -79,4 +79,10 @@ pool.numPendingAcquires()
 
 // how many asynchronous create calls are running
 pool.numPendingCreates()
+
+// waits for all resources to be returned to the pool and destroys them.
+// pool cannot be used after this.
+poo.destroy().then(() => {
+  console.log('pool destroyed');
+});
 ```

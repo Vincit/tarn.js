@@ -58,6 +58,7 @@ function Tarn(opt) {
 
   this.pendingCreates = [];
   this.pendingAcquires = [];
+  this.destroyed = false;
 
   var self = this;
   this.interval = setInterval(function () {
@@ -102,7 +103,10 @@ Tarn.prototype.release = function (resource) {
 
     if (used.resource === resource) {
       this.used.splice(i, 1);
+
       this.free.push(new FreeResource(used.resource));
+      used.freed.resolve();
+
       this._tryAcquireNext(0);
       return true;
     }
@@ -133,13 +137,37 @@ Tarn.prototype.check = function () {
 };
 
 Tarn.prototype.destroy = function() {
+  var self = this;
+
   clearInterval(this.interval);
+  this.destroyed = true;
+
+  // First wait for all the pending creates get ready.
+  return Promise.all(this.pendingCreates.map(function (create) {
+    create.abort();
+    return create.promise.reflect();
+  })).then(function () {
+    // Now we can destroy all the freed resources.
+    self.free.map(function (free) {
+      self._destroy(free.resource);
+    });
+
+    // Now we can destroy all the freed resources.
+    self.used.map(function (used) {
+      self._destroy(used.resource);
+    });
+
+    // And abort all pending acquires.
+    self.pendingAcquires.map(function (acquire) {
+      acquire.abort();
+    });
+  }).reflect();
 };
 
 Tarn.prototype._tryAcquireNext = function (recursion) {
   recursion = (recursion || 0) + 1;
 
-  if (this.used.length >= this.max || this.pendingAcquires.length === 0 || recursion > RECURSION_LIMIT) {
+  if (this.destroyed || this.used.length >= this.max || this.pendingAcquires.length === 0 || recursion > RECURSION_LIMIT) {
     // Nothing to do.
     return;
   }
@@ -177,7 +205,9 @@ Tarn.prototype._acquireNext = function (recursion) {
     this.free.shift();
 
     this.used.push(new UsedResource(free.resource));
-    pendingAcquire._resolve(free.resource);
+    free.used.resolve();
+
+    pendingAcquire.ready.resolve(free.resource);
   }
 
   // If we destroyed invalid resources, we may need to create new ones.
@@ -201,12 +231,12 @@ Tarn.prototype._create = function () {
       this._destroy(resource);
     } else {
       self.free.push(new FreeResource(resource));
-      pendingCreate._resolve(resource);
+      pendingCreate.ready.resolve(resource);
     }
   }).catch(function (err) {
     remove(self.pendingCreates, pendingCreate);
 
-    pendingCreate._reject(err);
+    pendingCreate.ready.reject(err);
   });
 
   return pendingCreate;
@@ -223,11 +253,13 @@ Tarn.prototype._destroy = function (resource) {
 function FreeResource(resource) {
   this.resource = resource;
   this.timestamp = now();
+  this.used = defer();
 }
 
 function UsedResource(resource) {
   this.resource = resource;
   this.timestamp = now();
+  this.freed = defer();
 }
 
 function PendingOperation(timeout) {
@@ -235,22 +267,16 @@ function PendingOperation(timeout) {
     throw new Error('should never happen!');
   }
 
-  this._resolve = null;
-  this._reject = null;
-
-  var self = this;
-  this.promise = new Promise(function (resolve, reject) {
-    self._resolve = resolve;
-    self._reject = reject;
-  }).timeout(timeout);
+  this.ready = defer();
+  this.promise = this.ready.promise.timeout(timeout);
 }
 
 PendingOperation.prototype.abort = function () {
-  this._reject(new Error('aborted'));
+  this.ready.reject(new Error('aborted'));
 };
 
 PendingOperation.prototype.isRejected = function () {
-  return this.promise.isRejected();
+  return this.ready.promise.isRejected();
 };
 
 function now() {
@@ -299,6 +325,22 @@ function callbackOrPromise(func, args) {
       }
     }).catch(reject);
   });
+}
+
+function defer() {
+  var resolve = null;
+  var reject = null;
+
+  var promise = new Promise(function (resolver, rejecter) {
+    resolve = resolver;
+    reject = rejecter;
+  });
+
+  return {
+    promise: promise,
+    resolve: resolve,
+    reject: reject
+  };
 }
 
 module.exports = {
