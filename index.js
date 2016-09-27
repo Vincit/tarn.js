@@ -1,7 +1,7 @@
 var Promise = require('bluebird');
 var RECURSION_LIMIT = 100;
 
-function Tarn(opt) {
+function Pool(opt) {
   opt = opt || {};
 
   if (!opt.create) {
@@ -66,23 +66,23 @@ function Tarn(opt) {
   }, this.reapIntervalMillis);
 }
 
-Tarn.prototype.numUsed = function () {
+Pool.prototype.numUsed = function () {
   return this.used.length;
 };
 
-Tarn.prototype.numFree = function () {
+Pool.prototype.numFree = function () {
   return this.free.length;
 };
 
-Tarn.prototype.numPendingAcquires = function () {
+Pool.prototype.numPendingAcquires = function () {
   return this.pendingAcquires.length;
 };
 
-Tarn.prototype.numPendingCreates = function () {
+Pool.prototype.numPendingCreates = function () {
   return this.pendingCreates.length;
 };
 
-Tarn.prototype.acquire = function () {
+Pool.prototype.acquire = function () {
   var self = this;
 
   var pendingAcquire = new PendingOperation(this.acquireTimeoutMillis);
@@ -97,7 +97,7 @@ Tarn.prototype.acquire = function () {
   return pendingAcquire;
 };
 
-Tarn.prototype.release = function (resource) {
+Pool.prototype.release = function (resource) {
   for (var i = 0, l = this.used.length; i < l; ++i) {
     var used = this.used[i];
 
@@ -115,7 +115,7 @@ Tarn.prototype.release = function (resource) {
   return false;
 };
 
-Tarn.prototype.check = function () {
+Pool.prototype.check = function () {
   var timestamp = now();
   var newFree = [];
   var minKeep = this.min - this.used.length;
@@ -136,7 +136,7 @@ Tarn.prototype.check = function () {
   this.free = newFree;
 };
 
-Tarn.prototype.destroy = function() {
+Pool.prototype.destroy = function() {
   var self = this;
 
   clearInterval(this.interval);
@@ -164,7 +164,7 @@ Tarn.prototype.destroy = function() {
   }).reflect();
 };
 
-Tarn.prototype._tryAcquireNext = function (recursion) {
+Pool.prototype._tryAcquireNext = function (recursion) {
   recursion = (recursion || 0) + 1;
 
   if (this.destroyed || this.used.length >= this.max || this.pendingAcquires.length === 0 || recursion > RECURSION_LIMIT) {
@@ -185,7 +185,7 @@ Tarn.prototype._tryAcquireNext = function (recursion) {
   }
 };
 
-Tarn.prototype._acquireNext = function (recursion) {
+Pool.prototype._acquireNext = function (recursion) {
   while (this.free.length > 0 && this.pendingAcquires.length > 0) {
     var pendingAcquire = this.pendingAcquires[0];
     var free = this.free[0];
@@ -216,7 +216,7 @@ Tarn.prototype._acquireNext = function (recursion) {
   }
 };
 
-Tarn.prototype._create = function () {
+Pool.prototype._create = function () {
   var self = this;
 
   var pendingCreate = new PendingOperation(this.createTimeoutMillis);
@@ -242,7 +242,7 @@ Tarn.prototype._create = function () {
   return pendingCreate;
 };
 
-Tarn.prototype._destroy = function (resource) {
+Pool.prototype._destroy = function (resource) {
   try {
     this.destroyer(resource);
   } catch (err) {
@@ -344,7 +344,7 @@ function defer() {
 }
 
 module.exports = {
-  Tarn: Tarn,
+  Pool: Pool,
   Promise: Promise,
-  TimeOutError: Promise.TimeoutError
+  TimeoutError: Promise.TimeoutError
 };

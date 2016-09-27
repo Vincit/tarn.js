@@ -1,5 +1,5 @@
 var Promise = require('bluebird');
-var Tarn = require('./').Tarn;
+var Pool = require('./').Pool;
 var expect = require('expect.js');
 
 describe('Tarn', function () {
@@ -17,7 +17,7 @@ describe('Tarn', function () {
 
   it('should fail if no opt.create function is given', function () {
     expect(function () {
-      pool = new Tarn({
+      pool = new Pool({
         destroy: function () {},
         min: 0,
         max: 1
@@ -29,7 +29,7 @@ describe('Tarn', function () {
 
   it('should fail if no opt.destroy function is given', function () {
     expect(function () {
-      pool = new Tarn({
+      pool = new Pool({
         create: function () {},
         min: 0,
         max: 1
@@ -41,7 +41,7 @@ describe('Tarn', function () {
 
   it('should fail if opt.min is missing', function () {
     expect(function () {
-      pool = new Tarn({
+      pool = new Pool({
         create: function () {},
         destroy: function () {},
         max: 1
@@ -53,7 +53,7 @@ describe('Tarn', function () {
 
   it('should fail if a non-integer opt.min is given', function () {
     expect(function () {
-      pool = new Tarn({
+      pool = new Pool({
         create: function () {},
         destroy: function () {},
         min: '0',
@@ -66,7 +66,7 @@ describe('Tarn', function () {
 
   it('should fail if a negative opt.min is given', function () {
     expect(function () {
-      pool = new Tarn({
+      pool = new Pool({
         create: function () {},
         destroy: function () {},
         min: -1,
@@ -79,7 +79,7 @@ describe('Tarn', function () {
 
   it('should fail if opt.max is missing', function () {
     expect(function () {
-      pool = new Tarn({
+      pool = new Pool({
         create: function () {},
         destroy: function () {},
         min: 0
@@ -91,7 +91,7 @@ describe('Tarn', function () {
 
   it('should fail if a non-integer opt.max is given', function () {
     expect(function () {
-      pool = new Tarn({
+      pool = new Pool({
         create: function () {},
         destroy: function () {},
         min: 0,
@@ -104,7 +104,7 @@ describe('Tarn', function () {
 
   it('should fail if a negative opt.max is given', function () {
     expect(function () {
-      pool = new Tarn({
+      pool = new Pool({
         create: function () {},
         destroy: function () {},
         min: 0,
@@ -117,7 +117,7 @@ describe('Tarn', function () {
 
   it('should fail if a zero opt.max is given', function () {
     expect(function () {
-      pool = new Tarn({
+      pool = new Pool({
         create: function () {},
         destroy: function () {},
         min: 0,
@@ -130,7 +130,7 @@ describe('Tarn', function () {
 
   it('should fail if opt.min > opt.max is given', function () {
     expect(function () {
-      pool = new Tarn({
+      pool = new Pool({
         create: function () {},
         destroy: function () {},
         min: 2,
@@ -143,7 +143,7 @@ describe('Tarn', function () {
 
   it('should fail if a non-integer opt.acquireTimeoutMillis is given', function () {
     expect(function () {
-      pool = new Tarn({
+      pool = new Pool({
         create: function () {},
         destroy: function () {},
         min: 2,
@@ -157,7 +157,7 @@ describe('Tarn', function () {
 
   it('should fail if a negative opt.acquireTimeoutMillis is given', function () {
     expect(function () {
-      pool = new Tarn({
+      pool = new Pool({
         create: function () {},
         destroy: function () {},
         min: 2,
@@ -171,7 +171,7 @@ describe('Tarn', function () {
 
   it('should fail if a zero opt.acquireTimeoutMillis is given', function () {
     expect(function () {
-      pool = new Tarn({
+      pool = new Pool({
         create: function () {},
         destroy: function () {},
         min: 2,
@@ -185,7 +185,7 @@ describe('Tarn', function () {
 
   it('should fail if a non-integer opt.createTimeoutMillis is given', function () {
     expect(function () {
-      pool = new Tarn({
+      pool = new Pool({
         create: function () {},
         destroy: function () {},
         min: 2,
@@ -199,7 +199,7 @@ describe('Tarn', function () {
 
   it('should fail if a negative opt.createTimeoutMillis is given', function () {
     expect(function () {
-      pool = new Tarn({
+      pool = new Pool({
         create: function () {},
         destroy: function () {},
         min: 2,
@@ -213,7 +213,7 @@ describe('Tarn', function () {
 
   it('should fail if a zero opt.createTimeoutMillis is given', function () {
     expect(function () {
-      pool = new Tarn({
+      pool = new Pool({
         create: function () {},
         destroy: function () {},
         min: 2,
@@ -227,7 +227,7 @@ describe('Tarn', function () {
 
   it('should fail if a non-integer opt.idleTimeoutMillis is given', function () {
     expect(function () {
-      pool = new Tarn({
+      pool = new Pool({
         create: function () {},
         destroy: function () {},
         min: 2,
@@ -241,7 +241,7 @@ describe('Tarn', function () {
 
   it('should fail if a negative opt.idleTimeoutMillis is given', function () {
     expect(function () {
-      pool = new Tarn({
+      pool = new Pool({
         create: function () {},
         destroy: function () {},
         min: 2,
@@ -255,7 +255,7 @@ describe('Tarn', function () {
 
   it('should fail if a zero opt.idleTimeoutMillis is given', function () {
     expect(function () {
-      pool = new Tarn({
+      pool = new Pool({
         create: function () {},
         destroy: function () {},
         min: 2,
@@ -269,7 +269,7 @@ describe('Tarn', function () {
 
   it('should fail if a non-integer opt.reapIntervalMillis is given', function () {
     expect(function () {
-      pool = new Tarn({
+      pool = new Pool({
         create: function () {},
         destroy: function () {},
         min: 2,
@@ -283,7 +283,7 @@ describe('Tarn', function () {
 
   it('should fail if a negative opt.reapIntervalMillis is given', function () {
     expect(function () {
-      pool = new Tarn({
+      pool = new Pool({
         create: function () {},
         destroy: function () {},
         min: 2,
@@ -297,7 +297,7 @@ describe('Tarn', function () {
 
   it('should fail if a zero opt.reapIntervalMillis is given', function () {
     expect(function () {
-      pool = new Tarn({
+      pool = new Pool({
         create: function () {},
         destroy: function () {},
         min: 2,
@@ -314,7 +314,7 @@ describe('Tarn', function () {
     it('should acquire opt.max resources (async creator)', function () {
       var createCalled = 0;
 
-      pool = new Tarn({
+      pool = new Pool({
         create: function (callback) {
           var a = createCalled++;
 
@@ -346,7 +346,7 @@ describe('Tarn', function () {
     it('should acquire opt.max resources (promise creator)', function () {
       var createCalled = 0;
 
-      pool = new Tarn({
+      pool = new Pool({
         create: function () {
           return Promise.resolve({a: createCalled++}).delay(50);
         },
@@ -374,7 +374,7 @@ describe('Tarn', function () {
     it('should acquire opt.max resources (sync creator)', function () {
       var createCalled = 0;
 
-      pool = new Tarn({
+      pool = new Pool({
         create: function (callback) {
           callback(null, {a: createCalled++});
         },
@@ -403,7 +403,7 @@ describe('Tarn', function () {
       var createCalled = 0;
       var releasesCalled = false;
 
-      pool = new Tarn({
+      pool = new Pool({
         create: function (callback) {
           callback(null, {a: createCalled++});
         },
@@ -462,7 +462,7 @@ describe('Tarn', function () {
       var createCalled = 0;
       var destroyCalled = 0;
 
-      pool = new Tarn({
+      pool = new Pool({
         create: function (callback) {
           var a = createCalled++;
 
@@ -514,7 +514,7 @@ describe('Tarn', function () {
       var destroyCalled = 0;
       var destroyed = null;
 
-      pool = new Tarn({
+      pool = new Pool({
         create: function (callback) {
           callback(null, {a: createCalled++, n: 0});
         },
@@ -576,7 +576,7 @@ describe('Tarn', function () {
     it('release should release a resource', function () {
       var createCalled = 0;
 
-      pool = new Tarn({
+      pool = new Pool({
         create: function (callback) {
           var a = createCalled++;
 
@@ -631,7 +631,7 @@ describe('Tarn', function () {
       var createCalled = 0;
       var releaseCalled = false;
 
-      pool = new Tarn({
+      pool = new Pool({
         create: function (callback) {
           var a = createCalled++;
 
@@ -676,7 +676,7 @@ describe('Tarn', function () {
       var createCalled = 0;
       var acquireTimeoutMillis = 100;
 
-      pool = new Tarn({
+      pool = new Pool({
         create: function (callback) {
           var a = createCalled++;
 
@@ -723,7 +723,7 @@ describe('Tarn', function () {
       var createCalled = 0;
       var acquireTimeoutMillis = 100;
 
-      pool = new Tarn({
+      pool = new Pool({
         create: function (callback) {
           ++createCalled;
 
@@ -763,7 +763,7 @@ describe('Tarn', function () {
       var createCalled = 0;
       var acquireTimeoutMillis = 100;
 
-      pool = new Tarn({
+      pool = new Pool({
         create: function () {
           ++createCalled;
           throw new Error('foo');
@@ -805,7 +805,7 @@ describe('Tarn', function () {
       var destroyCalled = 0;
       var destroyed = [];
 
-      pool = new Tarn({
+      pool = new Pool({
         create: function (callback) {
           var a = createCalled++;
 
@@ -864,7 +864,7 @@ describe('Tarn', function () {
       var destroyCalled = 0;
       var destroyed = [];
 
-      pool = new Tarn({
+      pool = new Pool({
         create: function (callback) {
           var a = createCalled++;
 
