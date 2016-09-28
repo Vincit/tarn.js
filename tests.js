@@ -11,7 +11,8 @@ describe('Tarn', function () {
 
   afterEach(function () {
     if (pool) {
-      return pool.destroy();
+      // Stop the reaping loop.
+      pool._stopReaping();
     }
   });
 
@@ -665,6 +666,96 @@ describe('Tarn', function () {
       }).then(function (res) {
         expect(res).to.eql({a: 1});
         expect(releaseCalled).to.equal(true);
+      });
+    });
+
+    it('should ignore unknown resources', function () {
+      var createCalled = 0;
+
+      pool = new Pool({
+        create: function (callback) {
+          var a = createCalled++;
+
+          setTimeout(function () {
+            callback(null, {a: a});
+          }, 1);
+        },
+        destroy: function () {},
+        min: 0,
+        max: 2
+      });
+
+      return Promise.all([
+        pool.acquire().promise,
+        pool.acquire().promise
+      ]).then(function (res) {
+        expect(res).to.eql([{a: 0}, {a: 1}]);
+
+        // These should do nothing, since the resources are not referentially equal.
+        pool.release({a: 0});
+        pool.release({a: 1});
+        pool.release({});
+
+        expect(createCalled).to.equal(2);
+        expect(pool.numUsed()).to.equal(2);
+        expect(pool.numFree()).to.equal(0);
+        expect(pool.numPendingAcquires()).to.equal(0);
+        expect(pool.numPendingCreates()).to.equal(0);
+      });
+    });
+
+  });
+
+  describe('destroy', function () {
+
+    it('should wait for all creates to finish, and resources to be returned to the pool', function () {
+      var releaseCalled = false;
+      var destroyCalled = 0;
+      var createCalled = 0;
+      var abortCalled = false;
+
+      pool = new Pool({
+        create: function () {
+          ++createCalled;
+          return Promise.delay(100).return({});
+        },
+        destroy: function () {
+          ++destroyCalled;
+        },
+        min: 0,
+        max: 10
+      });
+
+      return Promise.all([
+        pool.acquire().promise,
+        pool.acquire().promise
+      ]).then(function (res) {
+
+        pool.acquire().promise.then(function (resource) {
+          pool.release(resource);
+        }).catch(function (err) {
+          expect(err.message).to.equal('aborted');
+          abortCalled = true;
+        });
+
+        setTimeout(function () {
+          pool.release(res[0]);
+          pool.release(res[1]);
+          releaseCalled = true;
+        }, 50);
+
+        return pool.destroy();
+      }).then(function () {
+        expect(abortCalled).to.equal(true);
+        expect(releaseCalled).to.equal(true);
+
+        expect(createCalled).to.equal(3);
+        expect(destroyCalled).to.equal(3);
+
+        expect(pool.numUsed()).to.equal(0);
+        expect(pool.numFree()).to.equal(0);
+        expect(pool.numPendingAcquires()).to.equal(0);
+        expect(pool.numPendingCreates()).to.equal(0);
       });
     });
 

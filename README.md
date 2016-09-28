@@ -62,6 +62,8 @@ const pool = new Tarn({
   reapIntervalMillis: 1000
 });
 
+// acquires a resource. The promise is rejected with `tarn.TimeoutError`
+// after `acquireTimeoutMillis` if a resource could not be acquired.
 pool.acquire().promise.then(someResource => {
   return useResource(someResource);
 }).then(someResource => {

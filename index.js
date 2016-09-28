@@ -116,22 +116,21 @@ Pool.prototype.release = function (resource) {
 };
 
 Pool.prototype.check = function () {
+  var self = this;
   var timestamp = now();
   var newFree = [];
   var minKeep = this.min - this.used.length;
   var maxDestroy = this.free.length - minKeep;
   var numDestroyed = 0;
 
-  for (var i = 0, li = this.free.length; i < li; ++i) {
-    var free = this.free[i];
-
-    if (duration(timestamp, free.timestamp) > this.idleTimeoutMillis && numDestroyed < maxDestroy) {
+  this.free.forEach(function (free) {
+    if (duration(timestamp, free.timestamp) > self.idleTimeoutMillis && numDestroyed < maxDestroy) {
       numDestroyed++;
-      this._destroy(free.resource);
+      self._destroy(free.resource);
     } else {
       newFree.push(free);
     }
-  }
+  });
 
   this.free = newFree;
 };
@@ -139,28 +138,31 @@ Pool.prototype.check = function () {
 Pool.prototype.destroy = function() {
   var self = this;
 
-  clearInterval(this.interval);
+  this._stopReaping();
   this.destroyed = true;
 
   // First wait for all the pending creates get ready.
   return Promise.all(this.pendingCreates.map(function (create) {
-    create.abort();
     return create.promise.reflect();
   })).then(function () {
+    // Wait for all the used resources to be freed.
+    return Promise.all(self.used.map(function (used) {
+      return used.freed.promise.reflect();
+    }));
+  }).then(function () {
+    // Abort all pending acquires.
+    return Promise.all(self.pendingAcquires.map(function (acquire) {
+      acquire.abort();
+      return acquire.promise.reflect();
+    }));
+  }).then(function () {
     // Now we can destroy all the freed resources.
     self.free.map(function (free) {
       self._destroy(free.resource);
     });
 
-    // Now we can destroy all the freed resources.
-    self.used.map(function (used) {
-      self._destroy(used.resource);
-    });
-
-    // And abort all pending acquires.
-    self.pendingAcquires.map(function (acquire) {
-      acquire.abort();
-    });
+    self.free = [];
+    self.pendingAcquires = [];
   }).reflect();
 };
 
@@ -248,6 +250,11 @@ Pool.prototype._destroy = function (resource) {
   } catch (err) {
     this.log('Tarn: resource destroyer threw an exception ' + err.stack, 'warn');
   }
+};
+
+Pool.prototype._stopReaping = function () {
+  clearTimeout(this.interval);
+  this.interval = null;
 };
 
 function FreeResource(resource) {
