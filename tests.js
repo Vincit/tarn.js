@@ -717,7 +717,7 @@ describe('Tarn', function () {
       pool = new Pool({
         create: function () {
           ++createCalled;
-          return Promise.delay(100).return({});
+          return Promise.delay(50).return({});
         },
         destroy: function () {
           ++destroyCalled;
@@ -731,18 +731,24 @@ describe('Tarn', function () {
         pool.acquire().promise
       ]).then(function (res) {
 
-        pool.acquire().promise.then(function (resource) {
-          pool.release(resource);
+        // Release before the create from the acquire is ready.
+        setTimeout(function () {
+          pool.release(res[0]);
+        }, 10);
+
+        pool.acquire().promise.then(function () {
+          throw new Error('should not get here since the creation takes 50 ms');
         }).catch(function (err) {
           expect(err.message).to.equal('aborted');
+          // destroy should abort
           abortCalled = true;
         });
 
+        // Release after the create from the acquire is ready.
         setTimeout(function () {
-          pool.release(res[0]);
           pool.release(res[1]);
           releaseCalled = true;
-        }, 50);
+        }, 100);
 
         return pool.destroy();
       }).then(function () {

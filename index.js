@@ -103,9 +103,7 @@ Pool.prototype.release = function (resource) {
 
     if (used.resource === resource) {
       this.used.splice(i, 1);
-
-      this.free.push(new FreeResource(used.resource));
-      used.freed.resolve();
+      this.free.push(used.toFree());
 
       this._tryAcquireNext(0);
       return true;
@@ -205,9 +203,7 @@ Pool.prototype._acquireNext = function (recursion) {
 
     this.pendingAcquires.shift();
     this.free.shift();
-
-    this.used.push(new UsedResource(free.resource));
-    free.used.resolve();
+    this.used.push(free.toUsed());
 
     pendingAcquire.ready.resolve(free.resource);
   }
@@ -263,11 +259,21 @@ function FreeResource(resource) {
   this.used = defer();
 }
 
+FreeResource.prototype.toUsed = function () {
+  this.used.resolve();
+  return new UsedResource(this.resource);
+};
+
 function UsedResource(resource) {
   this.resource = resource;
   this.timestamp = now();
   this.freed = defer();
 }
+
+UsedResource.prototype.toFree = function () {
+  this.freed.resolve();
+  return new FreeResource(this.resource);
+};
 
 function PendingOperation(timeout) {
   if (!checkRequiredTime(timeout)) {
