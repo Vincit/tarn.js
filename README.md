@@ -14,7 +14,7 @@ Tarn will always remain simple.
 npm install tarn
 ```
 
-## Usage:
+## Usage
 
 ```js
 const Tarn = require('tarn').Tarn;

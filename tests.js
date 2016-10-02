@@ -334,7 +334,7 @@ describe('Tarn', function () {
         pool.acquire().promise,
         pool.acquire().promise
       ]).then(function (res) {
-        expect(res).to.eql([{a: 0}, {a: 1}, {a: 2}, {a: 3}]);
+        expect(sortBy(res, 'a')).to.eql([{a: 0}, {a: 1}, {a: 2}, {a: 3}]);
 
         expect(createCalled).to.equal(4);
         expect(pool.numUsed()).to.equal(4);
@@ -362,7 +362,7 @@ describe('Tarn', function () {
         pool.acquire().promise,
         pool.acquire().promise
       ]).then(function (res) {
-        expect(res).to.eql([{a: 0}, {a: 1}, {a: 2}, {a: 3}]);
+        expect(sortBy(res, 'a')).to.eql([{a: 0}, {a: 1}, {a: 2}, {a: 3}]);
 
         expect(createCalled).to.equal(4);
         expect(pool.numUsed()).to.equal(4);
@@ -390,7 +390,7 @@ describe('Tarn', function () {
         pool.acquire().promise,
         pool.acquire().promise
       ]).then(function (res) {
-        expect(res).to.eql([{a: 0}, {a: 1}, {a: 2}, {a: 3}]);
+        expect(sortBy(res, 'a')).to.eql([{a: 0}, {a: 1}, {a: 2}, {a: 3}]);
 
         expect(createCalled).to.equal(4);
         expect(pool.numUsed()).to.equal(4);
@@ -420,7 +420,7 @@ describe('Tarn', function () {
         pool.acquire().promise,
         pool.acquire().promise
       ]).then(function (res) {
-        expect(res).to.eql([{a: 0}, {a: 1}, {a: 2}, {a: 3}, {a: 4}]);
+        expect(sortBy(res, 'a') ).to.eql([{a: 0}, {a: 1}, {a: 2}, {a: 3}, {a: 4}]);
 
         expect(createCalled).to.equal(5);
         expect(pool.numUsed()).to.equal(5);
@@ -534,7 +534,7 @@ describe('Tarn', function () {
         acquire(),
         acquire()
       ]).then(function (res) {
-        expect(res).to.eql([{a: 0, n: 1}, {a: 1, n: 1}]);
+        expect(sortBy(res, 'a')).to.eql([{a: 0, n: 1}, {a: 1, n: 1}]);
 
         expect(createCalled).to.equal(2);
         expect(destroyCalled).to.equal(0);
@@ -595,7 +595,7 @@ describe('Tarn', function () {
         pool.acquire().promise,
         pool.acquire().promise
       ]).then(function (res) {
-        expect(res).to.eql([{a: 0}, {a: 1}, {a: 2}]);
+        expect(sortBy(res, 'a')).to.eql([{a: 0}, {a: 1}, {a: 2}]);
 
         expect(createCalled).to.equal(3);
         expect(pool.numUsed()).to.equal(3);
@@ -618,7 +618,7 @@ describe('Tarn', function () {
           pool.acquire().promise
         ]);
       }).then(function (res) {
-        expect(res).to.eql([{a: 2}, {a: 1}, {a: 3}]);
+        expect(res).to.eql([{a: 1}, {a: 2}, {a: 3}]);
 
         expect(createCalled).to.equal(4);
         expect(pool.numUsed()).to.equal(4);
@@ -659,7 +659,7 @@ describe('Tarn', function () {
 
         setTimeout(function () {
           releaseCalled = true;
-          pool.release(res[1]);
+          pool.release(findBy(res, 'a', 1));
         }, 100);
 
         return pendingAcquire.promise;
@@ -671,6 +671,7 @@ describe('Tarn', function () {
 
     it('should ignore unknown resources', function () {
       var createCalled = 0;
+      var destroyCalled = 0;
 
       pool = new Pool({
         create: function (callback) {
@@ -680,7 +681,9 @@ describe('Tarn', function () {
             callback(null, {a: a});
           }, 1);
         },
-        destroy: function () {},
+        destroy: function () {
+          ++destroyCalled;
+        },
         min: 0,
         max: 2
       });
@@ -689,7 +692,7 @@ describe('Tarn', function () {
         pool.acquire().promise,
         pool.acquire().promise
       ]).then(function (res) {
-        expect(res).to.eql([{a: 0}, {a: 1}]);
+        expect(sortBy(res, 'a')).to.eql([{a: 0}, {a: 1}]);
 
         // These should do nothing, since the resources are not referentially equal.
         pool.release({a: 0});
@@ -697,6 +700,7 @@ describe('Tarn', function () {
         pool.release({});
 
         expect(createCalled).to.equal(2);
+        expect(destroyCalled).to.equal(0);
         expect(pool.numUsed()).to.equal(2);
         expect(pool.numFree()).to.equal(0);
         expect(pool.numPendingAcquires()).to.equal(0);
@@ -925,7 +929,7 @@ describe('Tarn', function () {
         pool.acquire().promise,
         pool.acquire().promise
       ]).then(function (res) {
-        expect(res).to.eql([{a: 0}, {a: 1}, {a: 2}]);
+        expect(sortBy(res, 'a')).to.eql([{a: 0}, {a: 1}, {a: 2}]);
 
         expect(pool.numUsed()).to.equal(3);
         expect(pool.numFree()).to.equal(0);
@@ -985,14 +989,14 @@ describe('Tarn', function () {
         pool.acquire().promise,
         pool.acquire().promise
       ]).then(function (res) {
-        expect(res).to.eql([{a: 0}, {a: 1}, {a: 2}, {a: 3}]);
+        expect(sortBy(res, 'a')).to.eql([{a: 0}, {a: 1}, {a: 2}, {a: 3}]);
 
         expect(pool.numUsed()).to.equal(4);
         expect(pool.numFree()).to.equal(0);
 
-        pool.release(res[0]);
-        pool.release(res[1]);
-        pool.release(res[2]);
+        pool.release(findBy(res, 'a', 0));
+        pool.release(findBy(res, 'a', 1));
+        pool.release(findBy(res, 'a', 2));
 
         expect(destroyCalled).to.equal(0);
         expect(pool.numUsed()).to.equal(1);
@@ -1007,7 +1011,7 @@ describe('Tarn', function () {
 
         return Promise.delay(60);
       }).then(function () {
-        expect(destroyed).to.eql([{a: 0}, {a: 1}]);
+        expect(sortBy(destroyed, 'a')).to.eql([{a: 0}, {a: 1}]);
 
         expect(destroyCalled).to.equal(2);
         expect(pool.numUsed()).to.equal(1);
@@ -1017,6 +1021,96 @@ describe('Tarn', function () {
       }).catch(done);
     });
 
+    it('should release unused resources after idleTimeoutMillis when resources are repeatedly released and freed', function (done) {
+      var createCalled = 0;
+      var destroyCalled = 0;
+      var destroyed = [];
+      var finished = false;
+
+      pool = new Pool({
+        create: function (callback) {
+          var a = createCalled++;
+
+          setTimeout(function () {
+            callback(null, {a: a});
+          }, 10);
+        },
+        destroy: function (resource) {
+          ++destroyCalled;
+          destroyed.push(resource);
+        },
+        min: 0,
+        max: 4,
+        idleTimeoutMillis: 100,
+        reapIntervalMillis: 10
+      });
+
+      Promise.all([
+        pool.acquire().promise,
+        pool.acquire().promise,
+        pool.acquire().promise,
+        pool.acquire().promise
+      ]).then(function (res) {
+        pool.release(res[0]);
+        pool.release(res[1]);
+
+        // Start two threads that first release a resource and then acquire it again.
+        // Since we only use max 2 resources at a time, the two others hould get
+        // destroyed after idleTimeoutMillis
+        releaseAndAcquireThread(res[2]);
+        releaseAndAcquireThread(res[3]);
+
+        function releaseAndAcquireThread(res) {
+          if (finished) return;
+          pool.release(res);
+
+          return Promise.delay(5).then(function () {
+            if (finished) return;
+            return pool.acquire().promise;
+          }).then(function (res) {
+            if (finished) return;
+            return Promise.delay(5).then(function () {
+              return releaseAndAcquireThread(res);
+            });
+          });
+        }
+
+        return Promise.delay(120);
+      }).then(function () {
+        finished = true;
+
+        expect(createCalled).to.equal(4);
+        expect(destroyCalled).to.equal(2);
+        expect(pool.numFree() + pool.numUsed()).to.equal(2);
+        done();
+      }).catch(function (err) {
+        finished = true;
+        done(err);
+      });
+    });
+
   });
 
 });
+
+function sortBy(arr, key) {
+  return arr.sort(function (x1, x2) {
+    if (x1[key] === x2[key]) {
+      return 0;
+    } else if (x1[key] < x2[key]) {
+      return -1;
+    } else {
+      return 1;
+    }
+  });
+}
+
+function findBy(arr, key, value) {
+  for (var i = 0, l = arr.length; i < l; ++i) {
+    if (arr[i][key] === value) {
+      return arr[i];
+    }
+  }
+
+  return null;
+}

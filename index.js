@@ -188,7 +188,7 @@ Pool.prototype._tryAcquireNext = function (recursion) {
 Pool.prototype._acquireNext = function (recursion) {
   while (this.free.length > 0 && this.pendingAcquires.length > 0) {
     var pendingAcquire = this.pendingAcquires[0];
-    var free = this.free[0];
+    var free = this.free[this.free.length - 1];
 
     if (pendingAcquire.isRejected()) {
       this.pendingAcquires.shift();
@@ -196,13 +196,13 @@ Pool.prototype._acquireNext = function (recursion) {
     }
 
     if (!this.validate(free.resource)) {
-      this.free.shift();
+      this.free.pop();
       this._destroy(free.resource);
       continue;
     }
 
     this.pendingAcquires.shift();
-    this.free.shift();
+    this.free.pop();
     this.used.push(free.toUsed());
 
     pendingAcquire.ready.resolve(free.resource);
