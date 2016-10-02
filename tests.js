@@ -1064,18 +1064,22 @@ describe('Tarn', function () {
           if (finished) return;
           pool.release(res);
 
-          return Promise.delay(5).then(function () {
+          return Promise.delay(rand()).then(function () {
             if (finished) return;
             return pool.acquire().promise;
           }).then(function (res) {
             if (finished) return;
-            return Promise.delay(5).then(function () {
+            return Promise.delay(rand()).then(function () {
               return releaseAndAcquireThread(res);
             });
           });
         }
 
-        return Promise.delay(120);
+        function rand() {
+          return Math.round(1 + Math.random() * 4);
+        }
+
+        return Promise.delay(200);
       }).then(function () {
         finished = true;
 
