@@ -314,6 +314,7 @@ describe('Tarn', function () {
 
     it('should acquire opt.max resources (async creator)', function () {
       var createCalled = 0;
+      var destroyCalled = 0;
 
       pool = new Pool({
         create: function (callback) {
@@ -323,7 +324,9 @@ describe('Tarn', function () {
             callback(null, {a: a});
           }, 10);
         },
-        destroy: function () {},
+        destroy: function () {
+          ++destroyCalled;
+        },
         min: 2,
         max: 4
       });
@@ -337,6 +340,8 @@ describe('Tarn', function () {
         expect(sortBy(res, 'a')).to.eql([{a: 0}, {a: 1}, {a: 2}, {a: 3}]);
 
         expect(createCalled).to.equal(4);
+        expect(destroyCalled).to.equal(0);
+
         expect(pool.numUsed()).to.equal(4);
         expect(pool.numFree()).to.equal(0);
         expect(pool.numPendingAcquires()).to.equal(0);
@@ -346,12 +351,15 @@ describe('Tarn', function () {
 
     it('should acquire opt.max resources (promise creator)', function () {
       var createCalled = 0;
+      var destroyCalled = 0;
 
       pool = new Pool({
         create: function () {
           return Promise.resolve({a: createCalled++}).delay(50);
         },
-        destroy: function () {},
+        destroy: function () {
+          ++destroyCalled;
+        },
         min: 2,
         max: 4
       });
@@ -365,6 +373,8 @@ describe('Tarn', function () {
         expect(sortBy(res, 'a')).to.eql([{a: 0}, {a: 1}, {a: 2}, {a: 3}]);
 
         expect(createCalled).to.equal(4);
+        expect(destroyCalled).to.equal(0);
+
         expect(pool.numUsed()).to.equal(4);
         expect(pool.numFree()).to.equal(0);
         expect(pool.numPendingAcquires()).to.equal(0);
@@ -374,12 +384,15 @@ describe('Tarn', function () {
 
     it('should acquire opt.max resources (sync creator)', function () {
       var createCalled = 0;
+      var destroyCalled = 0;
 
       pool = new Pool({
         create: function (callback) {
           callback(null, {a: createCalled++});
         },
-        destroy: function () {},
+        destroy: function () {
+          ++destroyCalled;
+        },
         min: 2,
         max: 4
       });
@@ -393,6 +406,8 @@ describe('Tarn', function () {
         expect(sortBy(res, 'a')).to.eql([{a: 0}, {a: 1}, {a: 2}, {a: 3}]);
 
         expect(createCalled).to.equal(4);
+        expect(destroyCalled).to.equal(0);
+
         expect(pool.numUsed()).to.equal(4);
         expect(pool.numFree()).to.equal(0);
         expect(pool.numPendingAcquires()).to.equal(0);
