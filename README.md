@@ -84,7 +84,7 @@ pool.numPendingCreates()
 
 // waits for all resources to be returned to the pool and destroys them.
 // pool cannot be used after this.
-poo.destroy().then(() => {
+pool.destroy().then(() => {
   console.log('pool destroyed');
 });
 ```
