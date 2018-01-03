@@ -1,8 +1,8 @@
 {
   "name": "tarn",
-  "version": "0.1.6",
+  "version": "1.0.0",
   "description": "Simple and robust resource pool for node.js",
-  "main": "index.js",
+  "main": "lib/tarn.js",
   "license": "MIT",
   "scripts": {
     "test": "mocha --slow 10 --timeout 5000 --reporter spec tests.js",
@@ -25,13 +25,12 @@
   "files": [
     "README.md",
     "LICENSE",
-    "index.js"
+    "lib/*"
   ],
   "devDependencies": {
+    "bluebird": "^3.5.1",
     "expect.js": "^0.3.1",
-    "mocha": "^3.0.2"
+    "mocha": "^4.1.0"
   },
-  "dependencies": {
-    "bluebird": "^3.4.6"
-  }
+  "dependencies": {}
 }
