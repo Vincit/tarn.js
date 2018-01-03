@@ -875,7 +875,7 @@ describe('Tarn', () => {
 
     it('should recover after acquireTimeoutMillis if the create function returns an error', done => {
       let createCalled = 0;
-      let acquireTimeoutMillis = 0;
+      let acquireTimeoutMillis = 100;
 
       pool = new Pool({
         create(callback) {
