@@ -875,7 +875,7 @@ describe('Tarn', () => {
 
     it('should recover after acquireTimeoutMillis if the create function returns an error', done => {
       let createCalled = 0;
-      let acquireTimeoutMillis = 100;
+      let acquireTimeoutMillis = 0;
 
       pool = new Pool({
         create(callback) {
@@ -924,7 +924,7 @@ describe('Tarn', () => {
       let acquireTimeoutMillis = 100;
 
       pool = new Pool({
-        create: () => {
+        create() {
           ++createCalled;
           throw new Error('this is the error from create');
         },
@@ -1161,6 +1161,99 @@ describe('Tarn', () => {
           done(err);
         });
     });
+  });
+
+  describe('randomized tests', () => {
+    const NUM_RANDOM_TESTS = 1000;
+
+    for (let rndIdx = 1; rndIdx < NUM_RANDOM_TESTS; ++rndIdx) {
+      const maxResources = 10 + randInt(90);
+      const minResources = randInt(10);
+      const numActions = 50 + randInt(400);
+      const maxAcquireDelay = randInt(800);
+      const maxReleaseDelay = randInt(100);
+      const reapIntervalMillis = 5 + randInt(95);
+      const idleTimeoutMillis = 5 + randInt(95);
+      const createFailProp = Math.random() * 0.7;
+      const destroyFailProp = Math.random() * 0.7;
+      const validateFailProp = Math.random() * 0.5;
+
+      it(`random ${rndIdx}`, function() {
+        this.timeout(NUM_RANDOM_TESTS * 1000);
+        let id = 0;
+
+        const usedResources = [];
+        const createdResources = [];
+        const destroyedResources = [];
+
+        pool = new Pool({
+          create() {
+            const delay = Promise.delay(randInt(100));
+
+            if (Math.random() < createFailProp) {
+              return delay.then(() => Promise.reject(new Error('create error')));
+            } else {
+              const resource = { id: ++id };
+              createdResources.push(resource);
+              return delay.then(() => resource);
+            }
+          },
+
+          destroy(resource) {
+            destroyedResources.push(resource);
+
+            if (Math.random() < destroyFailProp) {
+              throw new Error('create error ' + createIdx);
+            }
+          },
+
+          validate(resource) {
+            return Math.random() > validateFailProp;
+          },
+
+          min: minResources,
+          max: maxResources,
+          reapIntervalMillis,
+          idleTimeoutMillis
+        });
+
+        const actions = [];
+
+        for (let i = 0; i < numActions; ++i) {
+          actions.push(() => {
+            return Promise.delay(randInt(maxAcquireDelay))
+              .then(() => pool.acquire().promise)
+              .then(resource => {
+                expect(usedResources.includes(resource)).to.equal(false);
+                expect(pool.numUsed()).to.lessThan(maxResources + 1);
+                expect(pool.numFree()).to.lessThan(maxResources + 1);
+                usedResources.push(resource);
+                return Promise.delay(randInt(maxReleaseDelay)).return(resource);
+              })
+              .then(resource => {
+                usedResources.splice(usedResources.indexOf(resource), 1);
+                pool.release(resource);
+              });
+          });
+        }
+
+        return Promise.map(actions, action => action())
+          .then(() => {
+            expect(pool.numUsed()).to.equal(0);
+            expect(pool.numFree()).to.lessThan(maxResources + 1);
+
+            return pool.destroy();
+          })
+          .then(() => {
+            expect(createdResources.length).to.equal(destroyedResources.length);
+            expect(createdResources.every(it => destroyedResources.includes(it)));
+          });
+      });
+    }
+
+    function randInt(max) {
+      return Math.round(Math.random() * max);
+    }
   });
 });
 

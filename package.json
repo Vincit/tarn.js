@@ -17,16 +17,11 @@
     "type": "git",
     "url": "git://github.com/vincit/tarn.js.git"
   },
-  "keywords": [
-    "pool",
-    "pooling",
-    "throttle"
-  ],
-  "files": [
-    "README.md",
-    "LICENSE",
-    "lib/*"
-  ],
+  "engines": {
+    "node": ">=6.0.0"
+  },
+  "keywords": ["pool", "pooling", "throttle"],
+  "files": ["README.md", "LICENSE", "lib/*"],
   "devDependencies": {
     "bluebird": "^3.5.1",
     "expect.js": "^0.3.1",
