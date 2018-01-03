@@ -77,7 +77,7 @@ acquire.abort();
 try {
   const resource = await acquire.promise;
 } catch (err) {
-  // if the acquire times out and error of class TimeoutError is thrown
+  // if the acquire times out an error of class TimeoutError is thrown
   if (err instanceof TimeoutError) {
     console.log('timeout');
   }
