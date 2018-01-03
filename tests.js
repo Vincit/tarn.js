@@ -1164,7 +1164,7 @@ describe('Tarn', () => {
   });
 
   describe('randomized tests', () => {
-    const NUM_RANDOM_TESTS = 1000;
+    const NUM_RANDOM_TESTS = 0;
 
     for (let rndIdx = 1; rndIdx < NUM_RANDOM_TESTS; ++rndIdx) {
       const maxResources = 10 + randInt(90);
