@@ -527,10 +527,10 @@ describe('Tarn', () => {
 
       pool = new Pool({
         create(callback) {
-          let a = createCalled++;
+          const a = createCalled++;
 
           setTimeout(() => {
-            callback(null, { a: a });
+            callback(null, { a });
           }, 50);
         },
         destroy() {

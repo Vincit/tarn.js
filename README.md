@@ -17,9 +17,9 @@ npm install tarn
 ## Usage
 
 ```js
-const Tarn = require('tarn').Tarn;
+const { Pool, TimeoutError } = require('tarn');
 
-const pool = new Tarn({
+const pool = new Pool({
 
   // function that creates a resource. You can either pass the resource
   // to the callback or return a promise that resolves the resource
@@ -27,48 +27,64 @@ const pool = new Tarn({
   create: (cb) => {
     cb(null, new SomeResource());
   },
-  
+
   // validates a connection before it is used. Return true or false
   // from it. If false is returned, the resource is destroyed and a
   // another one is acquired.
   validate: (resource) {
     return true;
   },
-  
+
   // function that destroys a resource. This is always synchronous
   // as nothing waits for the return value.
   destroy: (someResource) => {
     someResource.cleanup();
   },
-  
+
   // minimum size
   min: 2,
-  
+
   // maximum size
   max: 10,
-  
+
   // acquire promises are rejected after this many milliseconds
   // if a resource cannot be acquired
   acquireTimeoutMillis: 30000,
-  
+
   // create operations are cancelled after this many milliseconds
   // if a resource cannot be acquired
   createTimeoutMillis: 30000,
-  
+
   // free resouces are destroyed after this many milliseconds
   idleTimeoutMillis: 30000,
-  
+
   // how often to check for idle resources to destroy
-  reapIntervalMillis: 1000
+  reapIntervalMillis: 1000,
+
+  // long long to idle after failed create before trying again
+  createRetryIntervalMillis: 200
 });
 
 // acquires a resource. The promise is rejected with `tarn.TimeoutError`
 // after `acquireTimeoutMillis` if a resource could not be acquired.
-pool.acquire().promise.then(someResource => {
-  return useResource(someResource);
-}).then(someResource => {
-  pool.release(someResource);
-});
+const acquire = pool.acquire();
+
+// acquire can be aborted using the abort method
+acquire.abort();
+
+// the acquire object has a promise property that gets reolved with
+// the acquired resource
+try {
+  const resource = await acquire.promise;
+} catch (err) {
+  // if the acquire times out and error of class TimeoutError is thrown
+  if (err instanceof TimeoutError) {
+    console.log('timeout');
+  }
+}
+
+// releases the resource.
+pool.release(resource);
 
 // returns the number of non-free resources
 pool.numUsed()
@@ -84,7 +100,5 @@ pool.numPendingCreates()
 
 // waits for all resources to be returned to the pool and destroys them.
 // pool cannot be used after this.
-pool.destroy().then(() => {
-  console.log('pool destroyed');
-});
+await pool.destroy();
 ```
