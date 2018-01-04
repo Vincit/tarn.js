@@ -311,6 +311,20 @@ describe('Tarn', () => {
         expect(err.message).to.equal('Tarn: invalid opt.reapIntervalMillis 0');
       });
     });
+
+    it('should fail if a zero opt.createRetryIntervalMillis is given', () => {
+      expect(() => {
+        pool = new Pool({
+          create: () => {},
+          destroy() {},
+          min: 2,
+          max: 10,
+          createRetryIntervalMillis: 0
+        });
+      }).to.throwException(err => {
+        expect(err.message).to.equal('Tarn: invalid opt.createRetryIntervalMillis 0');
+      });
+    });
   });
 
   describe('acquire', () => {
@@ -1166,20 +1180,23 @@ describe('Tarn', () => {
   describe('randomized tests', () => {
     const NUM_RANDOM_TESTS = 0;
 
-    for (let rndIdx = 1; rndIdx < NUM_RANDOM_TESTS; ++rndIdx) {
+    for (let rndIdx = 1; rndIdx < NUM_RANDOM_TESTS + 1; ++rndIdx) {
       const maxResources = 10 + randInt(90);
       const minResources = randInt(10);
       const numActions = 50 + randInt(400);
       const maxAcquireDelay = randInt(800);
+      const maxCreateDelay = randInt(200);
       const maxReleaseDelay = randInt(100);
+
       const reapIntervalMillis = 5 + randInt(95);
       const idleTimeoutMillis = 5 + randInt(95);
+
       const createFailProp = Math.random() * 0.7;
       const destroyFailProp = Math.random() * 0.7;
       const validateFailProp = Math.random() * 0.5;
 
       it(`random ${rndIdx}`, function() {
-        this.timeout(NUM_RANDOM_TESTS * 1000);
+        this.timeout(1000000);
         let id = 0;
 
         const usedResources = [];
@@ -1188,7 +1205,7 @@ describe('Tarn', () => {
 
         pool = new Pool({
           create() {
-            const delay = Promise.delay(randInt(100));
+            const delay = Promise.delay(randInt(maxCreateDelay));
 
             if (Math.random() < createFailProp) {
               return delay.then(() => Promise.reject(new Error('create error')));
@@ -1225,8 +1242,8 @@ describe('Tarn', () => {
               .then(() => pool.acquire().promise)
               .then(resource => {
                 expect(usedResources.includes(resource)).to.equal(false);
-                expect(pool.numUsed()).to.lessThan(maxResources + 1);
-                expect(pool.numFree()).to.lessThan(maxResources + 1);
+                expect(pool.numUsed() + pool.numFree()).to.be.lessThan(maxResources + 1);
+
                 usedResources.push(resource);
                 return Promise.delay(randInt(maxReleaseDelay)).return(resource);
               })
@@ -1240,7 +1257,7 @@ describe('Tarn', () => {
         return Promise.map(actions, action => action())
           .then(() => {
             expect(pool.numUsed()).to.equal(0);
-            expect(pool.numFree()).to.lessThan(maxResources + 1);
+            expect(pool.numFree()).to.be.lessThan(maxResources + 1);
 
             return pool.destroy();
           })
