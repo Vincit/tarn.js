@@ -62,7 +62,13 @@ const pool = new Pool({
   reapIntervalMillis: 1000,
 
   // long long to idle after failed create before trying again
-  createRetryIntervalMillis: 200
+  createRetryIntervalMillis: 200,
+
+  // If true, when a create fails, the first pending acquire is
+  // rejected with the error. If this is false (the default) then
+  // create is retried until acquireTimeoutMillis milliseconds has
+  // passed.
+  propagateCreateError: false
 });
 
 // acquires a resource. The promise is rejected with `tarn.TimeoutError`

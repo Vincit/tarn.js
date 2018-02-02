@@ -837,7 +837,7 @@ describe('Tarn', () => {
   });
 
   describe('acquireTimeout', () => {
-    it('should acquire fail to acquire opt.max + 1 resources after acquireTimeoutMillis', done => {
+    it('should fail to acquire opt.max + 1 resources after acquireTimeoutMillis', done => {
       let createCalled = 0;
       let acquireTimeoutMillis = 100;
 
@@ -966,6 +966,62 @@ describe('Tarn', () => {
 
           expect(createCalled).to.equal(1);
           expect(pool.numUsed()).to.equal(0);
+          expect(pool.numFree()).to.equal(0);
+          expect(pool.numPendingAcquires()).to.equal(0);
+          expect(pool.numPendingCreates()).to.equal(0);
+
+          done();
+        })
+        .catch(done);
+    });
+  });
+
+  describe('propagateCreateError', () => {
+    it('should immediately reject the first acquire in the queue if create throws an error', done => {
+      let createCalled = 0;
+      let acquireTimeoutMillis = 1000;
+
+      pool = new Pool({
+        create(callback) {
+          createCalled++;
+
+          if (createCalled === 1) {
+            return Promise.reject(new Error('create fail'));
+          } else {
+            return Promise.resolve({ value: createCalled });
+          }
+        },
+        destroy() {},
+        min: 2,
+        max: 5,
+        acquireTimeoutMillis: acquireTimeoutMillis,
+        propagateCreateError: true
+      });
+
+      let now = Date.now();
+
+      Promise.resolve(pool.acquire().promise)
+        .reflect()
+        .then(res1 => {
+          return Promise.resolve(pool.acquire().promise)
+            .reflect()
+            .then(res2 => [res1, res2]);
+        })
+        .then(([res1, res2]) => {
+          let duration = Date.now() - now;
+
+          expect(res1.isRejected()).to.equal(true);
+          expect(res1.reason()).to.not.be.a(TimeoutError);
+          expect(res1.reason().message).to.equal('create fail');
+
+          expect(res2.isFulfilled()).to.equal(true);
+          expect(res2.value()).to.eql({ value: 2 });
+
+          // duration to fail should be significantly smaller than the acquireTimeoutMillis.
+          expect(duration).to.be.lessThan(acquireTimeoutMillis - 500);
+
+          expect(createCalled).to.equal(2);
+          expect(pool.numUsed()).to.equal(1);
           expect(pool.numFree()).to.equal(0);
           expect(pool.numPendingAcquires()).to.equal(0);
           expect(pool.numPendingCreates()).to.equal(0);
@@ -1220,7 +1276,7 @@ describe('Tarn', () => {
             destroyedResources.push(resource);
 
             if (Math.random() < destroyFailProp) {
-              throw new Error('create error ' + createIdx);
+              throw new Error('destroy error ' + createIdx);
             }
           },
 

@@ -1,6 +1,6 @@
 {
   "name": "tarn",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Simple and robust resource pool for node.js",
   "main": "lib/tarn.js",
   "license": "MIT",
@@ -20,16 +20,8 @@
   "engines": {
     "node": ">=6.0.0"
   },
-  "keywords": [
-    "pool",
-    "pooling",
-    "throttle"
-  ],
-  "files": [
-    "README.md",
-    "LICENSE",
-    "lib/*"
-  ],
+  "keywords": ["pool", "pooling", "throttle"],
+  "files": ["README.md", "LICENSE", "lib/*"],
   "devDependencies": {
     "bluebird": "^3.5.1",
     "expect.js": "^0.3.1",
