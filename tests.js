@@ -1,7 +1,9 @@
-let Promise = require('bluebird');
-let Pool = require('./').Pool;
-let TimeoutError = require('./').TimeoutError;
-let expect = require('expect.js');
+'use strict'
+
+const Promise = require('bluebird');
+const Pool = require('./').Pool;
+const TimeoutError = require('./').TimeoutError;
+const expect = require('expect.js');
 
 describe('Tarn', () => {
   let pool = null;
@@ -1007,7 +1009,7 @@ describe('Tarn', () => {
             .reflect()
             .then(res2 => [res1, res2]);
         })
-        .then(([res1, res2]) => {
+        .spread((res1, res2) => {
           let duration = Date.now() - now;
 
           expect(res1.isRejected()).to.equal(true);
