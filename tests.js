@@ -1,4 +1,4 @@
-'use strict'
+'use strict';
 
 const Promise = require('bluebird');
 const Pool = require('./').Pool;
@@ -1087,6 +1087,58 @@ describe('Tarn', () => {
           expect(destroyCalled).to.equal(2);
           expect(pool.numUsed()).to.equal(1);
           expect(pool.numFree()).to.equal(0);
+
+          done();
+        })
+        .catch(done);
+    });
+
+    it('should only run the reaping loop when there is something to reap', done => {
+      let createCalled = 0;
+      let destroyCalled = 0;
+      let destroyed = [];
+
+      pool = new Pool({
+        create(callback) {
+          let a = createCalled++;
+
+          setTimeout(() => {
+            callback(null, { a: a });
+          }, 10);
+        },
+        destroy(resource) {
+          ++destroyCalled;
+          destroyed.push(resource);
+        },
+        min: 0,
+        max: 4,
+        idleTimeoutMillis: 100,
+        reapIntervalMillis: 10
+      });
+
+      expect(pool.interval).to.equal(null);
+
+      pool
+        .acquire()
+        .promise.then(res => {
+          expect(pool.interval).to.not.equal(null);
+          pool.release(res);
+          return Promise.delay(50);
+        })
+        .then(() => {
+          expect(pool.interval).to.not.equal(null);
+          return Promise.delay(60);
+        })
+        .then(() => {
+          expect(pool.interval).to.equal(null);
+          expect(destroyed).to.eql([{ a: 0 }]);
+
+          // Should restart the reaping loop again.
+          return pool.acquire().promise;
+        })
+        .then(res => {
+          expect(pool.interval).to.not.equal(null);
+          expect(res).to.eql({ a: 1 });
 
           done();
         })
