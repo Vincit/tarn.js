@@ -1,108 +1,168 @@
-'use strict';
-Object.defineProperty(exports, '__esModule', { value: true });
-const PendingOperation_1 = require('./PendingOperation');
-const Resource_1 = require('./Resource');
-const utils_1 = require('./utils');
-class Pool {
-  constructor(opt) {
-    this.destroyed = false;
+import { PendingOperation } from './PendingOperation';
+import { Resource } from './Resource';
+import { checkOptionalTime, delay, duration, now, reflect, tryPromise } from './utils';
+
+export interface PoolOptions<T> {
+  create: CallbackOrPromise<T>;
+  destroy: (resource: T) => any;
+  min: number;
+  max: number;
+  acquireTimeoutMillis?: number;
+  createTimeoutMillis?: number;
+  idleTimeoutMillis?: number;
+  createRetryIntervalMillis?: number;
+  reapIntervalMillis?: number;
+  log?: (msg: string) => any;
+  validate?: (resource: T) => boolean;
+  propagateCreateError?: boolean;
+}
+
+export class Pool<T> {
+  protected min: number;
+  protected max: number;
+  protected used: Resource<T>[];
+  protected free: Resource<T>[];
+  protected pendingCreates: PendingOperation<T>[];
+  protected pendingAcquires: PendingOperation<T>[];
+  protected interval: NodeJS.Timer | null;
+  protected destroyed: boolean = false;
+  protected propagateCreateError: boolean;
+  protected idleTimeoutMillis: number;
+  protected createRetryIntervalMillis: number;
+  protected reapIntervalMillis: number;
+  protected createTimeoutMillis: number;
+  protected acquireTimeoutMillis: number;
+  protected log: (msg: string, level: 'warn') => any;
+  protected creator: CallbackOrPromise<T>;
+  protected destroyer: (resource: T) => any;
+  protected validate: (resource: T) => boolean;
+
+  constructor(opt: PoolOptions<T>) {
     opt = opt || {};
+
     if (!opt.create) {
       throw new Error('Tarn: opt.create function most be provided');
     }
+
     if (!opt.destroy) {
       throw new Error('Tarn: opt.destroy function most be provided');
     }
+
     if (typeof opt.min !== 'number' || opt.min < 0 || opt.min !== Math.round(opt.min)) {
       throw new Error('Tarn: opt.min must be an integer >= 0');
     }
+
     if (typeof opt.max !== 'number' || opt.max <= 0 || opt.max !== Math.round(opt.max)) {
       throw new Error('Tarn: opt.max must be an integer > 0');
     }
+
     if (opt.min > opt.max) {
       throw new Error('Tarn: opt.max is smaller than opt.min');
     }
-    if (!utils_1.checkOptionalTime(opt.acquireTimeoutMillis)) {
+
+    if (!checkOptionalTime(opt.acquireTimeoutMillis)) {
       throw new Error(
         'Tarn: invalid opt.acquireTimeoutMillis ' + JSON.stringify(opt.acquireTimeoutMillis)
       );
     }
-    if (!utils_1.checkOptionalTime(opt.createTimeoutMillis)) {
+
+    if (!checkOptionalTime(opt.createTimeoutMillis)) {
       throw new Error(
         'Tarn: invalid opt.createTimeoutMillis ' + JSON.stringify(opt.createTimeoutMillis)
       );
     }
-    if (!utils_1.checkOptionalTime(opt.idleTimeoutMillis)) {
+
+    if (!checkOptionalTime(opt.idleTimeoutMillis)) {
       throw new Error(
         'Tarn: invalid opt.idleTimeoutMillis ' + JSON.stringify(opt.idleTimeoutMillis)
       );
     }
-    if (!utils_1.checkOptionalTime(opt.reapIntervalMillis)) {
+
+    if (!checkOptionalTime(opt.reapIntervalMillis)) {
       throw new Error(
         'Tarn: invalid opt.reapIntervalMillis ' + JSON.stringify(opt.reapIntervalMillis)
       );
     }
-    if (!utils_1.checkOptionalTime(opt.createRetryIntervalMillis)) {
+
+    if (!checkOptionalTime(opt.createRetryIntervalMillis)) {
       throw new Error(
         'Tarn: invalid opt.createRetryIntervalMillis ' +
           JSON.stringify(opt.createRetryIntervalMillis)
       );
     }
+
     this.creator = opt.create;
     this.destroyer = opt.destroy;
     this.validate = typeof opt.validate === 'function' ? opt.validate : () => true;
     this.log = opt.log || (() => {});
+
     this.acquireTimeoutMillis = opt.acquireTimeoutMillis || 30000;
     this.createTimeoutMillis = opt.createTimeoutMillis || 30000;
     this.idleTimeoutMillis = opt.idleTimeoutMillis || 30000;
     this.reapIntervalMillis = opt.reapIntervalMillis || 1000;
     this.createRetryIntervalMillis = opt.createRetryIntervalMillis || 200;
     this.propagateCreateError = !!opt.propagateCreateError;
+
     this.min = opt.min;
     this.max = opt.max;
+
     this.used = [];
     this.free = [];
+
     this.pendingCreates = [];
     this.pendingAcquires = [];
     this.destroyed = false;
     this.interval = null;
   }
+
   numUsed() {
     return this.used.length;
   }
+
   numFree() {
     return this.free.length;
   }
+
   numPendingAcquires() {
     return this.pendingAcquires.length;
   }
+
   numPendingCreates() {
     return this.pendingCreates.length;
   }
+
   acquire() {
-    const pendingAcquire = new PendingOperation_1.PendingOperation(this.acquireTimeoutMillis);
+    const pendingAcquire = new PendingOperation<T>(this.acquireTimeoutMillis);
     this.pendingAcquires.push(pendingAcquire);
+
     // If the acquire fails for whatever reason
     // remove it from the pending queue.
     pendingAcquire.promise = pendingAcquire.promise.catch(err => {
       remove(this.pendingAcquires, pendingAcquire);
+
       return Promise.reject(err);
     });
+
     this._tryAcquireOrCreate();
     return pendingAcquire;
   }
-  release(resource) {
+
+  release(resource: T) {
     for (let i = 0, l = this.used.length; i < l; ++i) {
       const used = this.used[i];
+
       if (used.resource === resource) {
         this.used.splice(i, 1);
         this.free.push(used.resolve());
+
         this._tryAcquireOrCreate();
         return true;
       }
     }
+
     return false;
   }
+
   isEmpty() {
     return (
       [this.numFree(), this.numUsed(), this.numPendingAcquires(), this.numPendingCreates()].reduce(
@@ -110,15 +170,17 @@ class Pool {
       ) === 0
     );
   }
+
   check() {
-    const timestamp = utils_1.now();
-    const newFree = [];
+    const timestamp = now();
+    const newFree: Resource<T>[] = [];
     const minKeep = this.min - this.used.length;
     const maxDestroy = this.free.length - minKeep;
     let numDestroyed = 0;
+
     this.free.forEach(free => {
       if (
-        utils_1.duration(timestamp, free.timestamp) > this.idleTimeoutMillis &&
+        duration(timestamp, free.timestamp) > this.idleTimeoutMillis &&
         numDestroyed < maxDestroy
       ) {
         numDestroyed++;
@@ -127,29 +189,33 @@ class Pool {
         newFree.push(free);
       }
     });
+
     this.free = newFree;
+
     //Pool is completely empty, stop reaping.
     //Next .acquire will start reaping interval again.
     if (this.isEmpty()) {
       this._stopReaping();
     }
   }
+
   destroy() {
     this._stopReaping();
     this.destroyed = true;
+
     // First wait for all the pending creates get ready.
-    return utils_1.reflect(
-      Promise.all(this.pendingCreates.map(create => utils_1.reflect(create.promise)))
+    return reflect(
+      Promise.all(this.pendingCreates.map(create => reflect(create.promise)))
         .then(() => {
           // Wait for all the used resources to be freed.
-          return Promise.all(this.used.map(used => utils_1.reflect(used.promise)));
+          return Promise.all(this.used.map(used => reflect(used.promise)));
         })
         .then(() => {
           // Abort all pending acquires.
           return Promise.all(
             this.pendingAcquires.map(acquire => {
               acquire.abort();
-              return utils_1.reflect(acquire.promise);
+              return reflect(acquire.promise);
             })
           );
         })
@@ -161,64 +227,80 @@ class Pool {
         })
     );
   }
+
   _tryAcquireOrCreate() {
     if (this.destroyed) {
       return;
     }
+
     if (this._hasFreeResources()) {
       this._doAcquire();
     } else if (this._shouldCreateMoreResources()) {
       this._doCreate();
     }
   }
+
   _hasFreeResources() {
     return this.free.length > 0;
   }
+
   _doAcquire() {
     let didDestroyResources = false;
+
     while (this._canAcquire()) {
       const pendingAcquire = this.pendingAcquires[0];
       const free = this.free[this.free.length - 1];
+
       if (!this._validateResource(free.resource)) {
         this.free.pop();
         this._destroy(free.resource);
         didDestroyResources = true;
         continue;
       }
+
       this.pendingAcquires.shift();
       this.free.pop();
       this.used.push(free.resolve());
+
       //At least one active resource, start reaping
       this._startReaping();
+
       pendingAcquire.resolve(free.resource);
     }
+
     // If we destroyed invalid resources, we may need to create new ones.
     if (didDestroyResources) {
       this._tryAcquireOrCreate();
     }
   }
+
   _canAcquire() {
     return this.free.length > 0 && this.pendingAcquires.length > 0;
   }
-  _validateResource(resource) {
+
+  _validateResource(resource: T) {
     try {
       return !!this.validate(resource);
     } catch (err) {
       // There's nothing we can do here but log the error. This would otherwise
       // leak out as an unhandled exception.
       this.log('Tarn: resource validator threw an exception ' + err.stack, 'warn');
+
       return false;
     }
   }
+
   _shouldCreateMoreResources() {
     return (
       this.used.length + this.pendingCreates.length < this.max &&
       this.pendingCreates.length < this.pendingAcquires.length
     );
   }
+
   _doCreate() {
     const pendingAcquiresBeforeCreate = this.pendingAcquires.slice();
     const pendingCreate = this._create();
+
     pendingCreate.promise
       .then(() => {
         // Not returned on purpose.
@@ -233,31 +315,39 @@ class Pool {
           // been resolved.
           this.pendingAcquires[0].reject(err);
         }
+
         // Save the create error to all pending acquires so that we can use it
         // as the error to reject the acquire if it times out.
         pendingAcquiresBeforeCreate.forEach(pendingAcquire => {
           pendingAcquire.possibleTimeoutCause = err;
         });
+
         // Not returned on purpose.
-        utils_1.delay(this.createRetryIntervalMillis).then(() => this._tryAcquireOrCreate());
+        delay(this.createRetryIntervalMillis).then(() => this._tryAcquireOrCreate());
       });
   }
+
   _create() {
-    const pendingCreate = new PendingOperation_1.PendingOperation(this.createTimeoutMillis);
+    const pendingCreate = new PendingOperation<T>(this.createTimeoutMillis);
     this.pendingCreates.push(pendingCreate);
-    callbackOrPromise(this.creator)
+
+    callbackOrPromise<T>(this.creator)
       .then(resource => {
         remove(this.pendingCreates, pendingCreate);
-        this.free.push(new Resource_1.Resource(resource));
+        this.free.push(new Resource(resource));
+
         pendingCreate.resolve(resource);
       })
       .catch(err => {
         remove(this.pendingCreates, pendingCreate);
+
         pendingCreate.reject(err);
       });
+
     return pendingCreate;
   }
-  _destroy(resource) {
+
+  _destroy(resource: T) {
     try {
       this.destroyer(resource);
     } catch (err) {
@@ -266,11 +356,13 @@ class Pool {
       this.log('Tarn: resource destroyer threw an exception ' + err.stack, 'warn');
     }
   }
+
   _startReaping() {
     if (!this.interval) {
       this.interval = setInterval(() => this.check(), this.reapIntervalMillis);
     }
   }
+
   _stopReaping() {
     if (this.interval !== null) {
       clearInterval(this.interval);
@@ -278,9 +370,10 @@ class Pool {
     this.interval = null;
   }
 }
-exports.Pool = Pool;
-function remove(arr, item) {
+
+function remove<T>(arr: T[], item: T) {
   var idx = arr.indexOf(item);
+
   if (idx === -1) {
     return false;
   } else {
@@ -288,17 +381,21 @@ function remove(arr, item) {
     return true;
   }
 }
-function callbackOrPromise(func) {
-  return new Promise((resolve, reject) => {
-    const callback = (err, resource) => {
+
+export type Callback<T> = (err: Error | null, resource: T) => any;
+export type CallbackOrPromise<T> = (cb: Callback<T>) => any | (() => Promise<T>);
+
+function callbackOrPromise<T>(func: CallbackOrPromise<T>) {
+  return new Promise<T>((resolve, reject) => {
+    const callback: Callback<T> = (err, resource) => {
       if (err) {
         reject(err);
       } else {
         resolve(resource);
       }
     };
-    utils_1
-      .tryPromise(() => func(callback))
+
+    tryPromise(() => func(callback))
       .then(res => {
         // If the result is falsy, we assume that the callback will
         // be called instead of interpreting the falsy value as a
