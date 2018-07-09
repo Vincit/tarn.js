@@ -3,10 +3,15 @@
   "version": "1.1.4",
   "description": "Simple and robust resource pool for node.js",
   "main": "lib/tarn.js",
+  "types": "lib/tarn.d.ts",
   "license": "MIT",
   "scripts": {
     "test": "mocha --slow 10 --timeout 5000 --reporter spec tests.js",
-    "test-bail": "mocha --slow 10 --timeout 5000 --reporter spec --bail tests.js"
+    "test-bail": "mocha --slow 10 --timeout 5000 --reporter spec --bail tests.js",
+    "build": "tsc",
+    "clean": "rm -rf lib",
+    "prepublishOnly": "tsc",
+    "format": "prettier **/*.{js,ts} --write"
   },
   "author": {
     "name": "Sami Koskimäki",
@@ -30,10 +35,21 @@
     "LICENSE",
     "lib/*"
   ],
+  "lint-staged": {
+    "*.{js,ts}": [
+      "prettier --write",
+      "git add"
+    ]
+  },
   "devDependencies": {
     "bluebird": "^3.5.1",
     "expect.js": "^0.3.1",
-    "mocha": "^4.1.0"
+    "mocha": "^4.1.0",
+    "typescript": "2.9.1",
+    "@types/node": "^10.5.2",
+    "prettier": "^1.13.7",
+    "lint-staged": "^7.2.0",
+    "husky": "^0.14.3"
   },
   "dependencies": {}
 }
