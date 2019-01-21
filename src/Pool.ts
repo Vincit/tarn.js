@@ -305,6 +305,7 @@ export class Pool<T> {
       .then(() => {
         // Not returned on purpose.
         this._tryAcquireOrCreate();
+        return null;
       })
       .catch(err => {
         if (this.propagateCreateError && this.pendingAcquires.length !== 0) {
@@ -336,12 +337,16 @@ export class Pool<T> {
         remove(this.pendingCreates, pendingCreate);
         this.free.push(new Resource(resource));
 
+        // Not returned on purpose.
         pendingCreate.resolve(resource);
+        return null;
       })
       .catch(err => {
         remove(this.pendingCreates, pendingCreate);
 
+        // Not returned on purpose.
         pendingCreate.reject(err);
+        return null;
       });
 
     return pendingCreate;
