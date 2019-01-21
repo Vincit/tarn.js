@@ -192,8 +192,8 @@ export class Pool<T> {
 
     this.free = newFree;
 
-    //Pool is completely empty, stop reaping.
-    //Next .acquire will start reaping interval again.
+    // Pool is completely empty, stop reaping.
+    // Next .acquire will start reaping interval again.
     if (this.isEmpty()) {
       this._stopReaping();
     }
@@ -221,7 +221,9 @@ export class Pool<T> {
         })
         .then(() => {
           // Now we can destroy all the freed resources.
-          this.free.forEach(free => this._destroy(free.resource));
+          return Promise.all(this.free.map(free => this._destroy(free.resource)));
+        })
+        .then(() => {
           this.free = [];
           this.pendingAcquires = [];
         })
@@ -349,7 +351,7 @@ export class Pool<T> {
 
   _destroy(resource: T) {
     try {
-      this.destroyer(resource);
+      return this.destroyer(resource);
     } catch (err) {
       // There's nothing we can do here but log the error. This would otherwise
       // leak out as an unhandled exception.
