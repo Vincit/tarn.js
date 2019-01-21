@@ -836,6 +836,123 @@ describe('Tarn', () => {
           expect(pool.numPendingCreates()).to.equal(0);
         });
     });
+
+    it('should wait asynchronously for all creates to finish, and resources to be returned to the pool', () => {
+      let releaseCalled = false;
+      let destroyCalled = 0;
+      let createCalled = 0;
+      let abortCalled = false;
+
+      pool = new Pool({
+        create: () => {
+          ++createCalled;
+          return Promise.delay(50).return({});
+        },
+        destroy() {
+          ++destroyCalled;
+          return Promise.delay(200);
+        },
+        min: 0,
+        max: 10
+      });
+
+      return Promise.all([pool.acquire().promise, pool.acquire().promise])
+        .then(res => {
+          // Release before the create from the acquire is ready.
+          setTimeout(() => {
+            pool.release(res[0]);
+          }, 10);
+
+          pool
+            .acquire()
+            .promise.then(() => {
+              throw new Error('should not get here since the creation takes 50 ms');
+            })
+            .catch(err => {
+              expect(err.message).to.equal('aborted');
+              // destroy should abort
+              abortCalled = true;
+            });
+
+          // Release after the create from the acquire is ready.
+          setTimeout(() => {
+            pool.release(res[1]);
+            releaseCalled = true;
+          }, 100);
+
+          return pool.destroy();
+        })
+        .then(() => {
+          expect(abortCalled).to.equal(true);
+          expect(releaseCalled).to.equal(true);
+
+          expect(createCalled).to.equal(3);
+          expect(destroyCalled).to.equal(3);
+
+          expect(pool.numUsed()).to.equal(0);
+          expect(pool.numFree()).to.equal(0);
+          expect(pool.numPendingAcquires()).to.equal(0);
+          expect(pool.numPendingCreates()).to.equal(0);
+        });
+    });
+
+    it('should log an error if a sync error is thrown', () => {
+      let destroyerErrorThrown = false;
+      pool = new Pool({
+        create() {
+          return {id: 1};
+        },
+        destroy() {
+          throw new Error('destroy error');
+        },
+        log(msg) {
+          if (msg.includes('destroy error')) {
+            destroyerErrorThrown = true;
+          }
+        },
+        min: 0,
+        max: 10,
+      });
+
+      return pool.acquire().promise.then(resource => {
+          pool.release(resource);
+        })
+        .then(() => {
+          return pool.destroy();
+        })
+        .then(() => {
+          expect(destroyerErrorThrown).to.equal(true);
+        });
+    });
+
+    it('should log an error if an async error is thrown', () => {
+      let destroyerErrorThrown = false;
+      pool = new Pool({
+        create() {
+          return {id: 1};
+        },
+        destroy() {
+          return Promise.reject(new Error('destroy error'));
+        },
+        log(msg) {
+          if (msg.includes('destroy error')) {
+            destroyerErrorThrown = true;
+          }
+        },
+        min: 0,
+        max: 10,
+      });
+
+      return pool.acquire().promise.then(resource => {
+          pool.release(resource);
+        })
+        .then(() => {
+          return pool.destroy();
+        })
+        .then(() => {
+          expect(destroyerErrorThrown).to.equal(true);
+        });
+    });
   });
 
   describe('acquireTimeout', () => {

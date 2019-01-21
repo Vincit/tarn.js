@@ -351,12 +351,21 @@ export class Pool<T> {
 
   _destroy(resource: T) {
     try {
-      return this.destroyer(resource);
+      const retVal = this.destroyer(resource);
+      if (retVal && retVal.catch) {
+        // There's nothing we can do here but log the error.
+        retVal.catch(this._logError.bind(this));
+      }
+      return retVal;
     } catch (err) {
       // There's nothing we can do here but log the error. This would otherwise
       // leak out as an unhandled exception.
-      this.log('Tarn: resource destroyer threw an exception ' + err.stack, 'warn');
+      this._logError(err);
     }
+  }
+
+  _logError(err: Error) {
+    this.log('Tarn: resource destroyer threw an exception ' + err.stack, 'warn');
   }
 
   _startReaping() {

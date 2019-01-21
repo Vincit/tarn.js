@@ -56,6 +56,7 @@ export declare class Pool<T> {
   _doCreate(): void;
   _create(): PendingOperation<T>;
   _destroy(resource: T): any;
+  _logError(err: Error): void;
   _startReaping(): void;
   _stopReaping(): void;
 }
