@@ -351,6 +351,9 @@ export class Pool<T> {
 
   _destroy(resource: T) {
     try {
+      // this.destroyer can be both synchronous and asynchronous.
+      // When it's synchronous, errors are handled by the try/catch
+      // When it's asynchronous, errors are handled by .catch()
       const retVal = this.destroyer(resource);
       if (retVal && retVal.catch) {
         // There's nothing we can do here but log the error.
