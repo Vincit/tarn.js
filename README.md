@@ -55,6 +55,10 @@ const pool = new Pool({
   // if a resource cannot be acquired
   createTimeoutMillis: 30000,
 
+  // destroy operations are awaited for at most this many milliseconds
+  // new resources will be created after this timeout
+  destroyTimeoutMillis: 200,
+
   // free resouces are destroyed after this many milliseconds
   idleTimeoutMillis: 30000,
 

@@ -230,6 +230,48 @@ describe('Tarn', () => {
       });
     });
 
+    it('should fail if a non-integer opt.destroyTimeoutMillis is given', () => {
+      expect(() => {
+        pool = new Pool({
+          create: () => {},
+          destroy() {},
+          min: 2,
+          max: 10,
+          destroyTimeoutMillis: '10'
+        });
+      }).to.throwException(err => {
+        expect(err.message).to.equal('Tarn: invalid opt.destroyTimeoutMillis "10"');
+      });
+    });
+
+    it('should fail if a negative opt.destroyTimeoutMillis is given', () => {
+      expect(() => {
+        pool = new Pool({
+          create: () => {},
+          destroy() {},
+          min: 2,
+          max: 10,
+          destroyTimeoutMillis: -10
+        });
+      }).to.throwException(err => {
+        expect(err.message).to.equal('Tarn: invalid opt.destroyTimeoutMillis -10');
+      });
+    });
+
+    it('should fail if a zero opt.destroyTimeoutMillis is given', () => {
+      expect(() => {
+        pool = new Pool({
+          create: () => {},
+          destroy() {},
+          min: 2,
+          max: 10,
+          destroyTimeoutMillis: 0
+        });
+      }).to.throwException(err => {
+        expect(err.message).to.equal('Tarn: invalid opt.destroyTimeoutMillis 0');
+      });
+    });
+
     it('should fail if a non-integer opt.idleTimeoutMillis is given', () => {
       expect(() => {
         pool = new Pool({

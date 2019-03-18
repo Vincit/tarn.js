@@ -8,6 +8,7 @@ export interface PoolOptions<T> {
   max: number;
   acquireTimeoutMillis?: number;
   createTimeoutMillis?: number;
+  destroyTimeoutMillis?: number;
   idleTimeoutMillis?: number;
   createRetryIntervalMillis?: number;
   reapIntervalMillis?: number;
@@ -29,6 +30,7 @@ export declare class Pool<T> {
   protected createRetryIntervalMillis: number;
   protected reapIntervalMillis: number;
   protected createTimeoutMillis: number;
+  protected destroyTimeoutMillis: number;
   protected acquireTimeoutMillis: number;
   protected log: (msg: string, level: 'warn') => any;
   protected creator: CallbackOrPromise<T>;
@@ -55,7 +57,7 @@ export declare class Pool<T> {
   _shouldCreateMoreResources(): boolean;
   _doCreate(): void;
   _create(): PendingOperation<T>;
-  _destroy(resource: T): any;
+  _destroy(resource: T): Promise<any>;
   _logError(err: Error): void;
   _startReaping(): void;
   _stopReaping(): void;

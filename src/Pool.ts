@@ -9,6 +9,7 @@ export interface PoolOptions<T> {
   max: number;
   acquireTimeoutMillis?: number;
   createTimeoutMillis?: number;
+  destroyTimeoutMillis?: number;
   idleTimeoutMillis?: number;
   createRetryIntervalMillis?: number;
   reapIntervalMillis?: number;
@@ -31,6 +32,7 @@ export class Pool<T> {
   protected createRetryIntervalMillis: number;
   protected reapIntervalMillis: number;
   protected createTimeoutMillis: number;
+  protected destroyTimeoutMillis: number;
   protected acquireTimeoutMillis: number;
   protected log: (msg: string, level: 'warn') => any;
   protected creator: CallbackOrPromise<T>;
@@ -72,6 +74,12 @@ export class Pool<T> {
       );
     }
 
+    if (!checkOptionalTime(opt.destroyTimeoutMillis)) {
+      throw new Error(
+        'Tarn: invalid opt.destroyTimeoutMillis ' + JSON.stringify(opt.destroyTimeoutMillis)
+      );
+    }
+
     if (!checkOptionalTime(opt.idleTimeoutMillis)) {
       throw new Error(
         'Tarn: invalid opt.idleTimeoutMillis ' + JSON.stringify(opt.idleTimeoutMillis)
@@ -98,6 +106,7 @@ export class Pool<T> {
 
     this.acquireTimeoutMillis = opt.acquireTimeoutMillis || 30000;
     this.createTimeoutMillis = opt.createTimeoutMillis || 30000;
+    this.destroyTimeoutMillis = opt.destroyTimeoutMillis || 200;
     this.idleTimeoutMillis = opt.idleTimeoutMillis || 30000;
     this.reapIntervalMillis = opt.reapIntervalMillis || 1000;
     this.createRetryIntervalMillis = opt.createRetryIntervalMillis || 200;
@@ -221,7 +230,19 @@ export class Pool<T> {
         })
         .then(() => {
           // Now we can destroy all the freed resources.
-          return Promise.all(this.free.map(free => this._destroy(free.resource)));
+          return Promise.all(
+            this.free.map(free => {
+              const pendingDestroy = new PendingOperation<T>(this.destroyTimeoutMillis);
+              this._destroy(free.resource)
+                .then(() => {
+                  pendingDestroy.resolve(free.resource);
+                })
+                .catch(err => {
+                  pendingDestroy.reject(err);
+                });
+              return reflect(pendingDestroy.promise);
+            })
+          );
         })
         .then(() => {
           this.free = [];
@@ -359,11 +380,12 @@ export class Pool<T> {
         // There's nothing we can do here but log the error.
         retVal.catch(this._logError.bind(this));
       }
-      return retVal;
+      return Promise.resolve(retVal);
     } catch (err) {
       // There's nothing we can do here but log the error. This would otherwise
       // leak out as an unhandled exception.
       this._logError(err);
+      return Promise.resolve();
     }
   }
 
