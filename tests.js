@@ -995,7 +995,40 @@ describe('Tarn', () => {
           expect(destroyerErrorThrown).to.equal(true);
         });
     });
-  });
+
+    it('should not hang if the async destroy is too slow', () => {
+      let destroyTimeoutMillis = 100;
+      let destroyerErrorThrown = false;
+      pool = new Pool({
+        create() {
+          return {id: 1};
+        },
+        destroy() {
+          return new Promise((resolve) => {
+            setTimeout(resolve, destroyTimeoutMillis * 2);
+          })
+        },
+        log(msg) {
+          if (msg.includes('resource destroyer') && msg.includes('operation timed')) {
+            destroyerErrorThrown = true;
+          }
+        },
+        min: 0,
+        max: 10,
+        destroyTimeoutMillis: destroyTimeoutMillis,
+      });
+
+      return pool.acquire().promise.then(resource => {
+          pool.release(resource);
+        })
+        .then(() => {
+          return pool.destroy();
+        })
+        .then(() => {
+          console.log('abc')
+          expect(destroyerErrorThrown).to.equal(true);
+        });
+    });  });
 
   describe('acquireTimeout', () => {
     it('should fail to acquire opt.max + 1 resources after acquireTimeoutMillis', done => {

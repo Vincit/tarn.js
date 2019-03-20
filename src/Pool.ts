@@ -106,7 +106,7 @@ export class Pool<T> {
 
     this.acquireTimeoutMillis = opt.acquireTimeoutMillis || 30000;
     this.createTimeoutMillis = opt.createTimeoutMillis || 30000;
-    this.destroyTimeoutMillis = opt.destroyTimeoutMillis || 200;
+    this.destroyTimeoutMillis = opt.destroyTimeoutMillis || 5000;
     this.idleTimeoutMillis = opt.idleTimeoutMillis || 30000;
     this.reapIntervalMillis = opt.reapIntervalMillis || 1000;
     this.createRetryIntervalMillis = opt.createRetryIntervalMillis || 200;
@@ -230,19 +230,7 @@ export class Pool<T> {
         })
         .then(() => {
           // Now we can destroy all the freed resources.
-          return Promise.all(
-            this.free.map(free => {
-              const pendingDestroy = new PendingOperation<T>(this.destroyTimeoutMillis);
-              this._destroy(free.resource)
-                .then(() => {
-                  pendingDestroy.resolve(free.resource);
-                })
-                .catch(err => {
-                  pendingDestroy.reject(err);
-                });
-              return reflect(pendingDestroy.promise);
-            })
-          );
+          return Promise.all(this.free.map(free => reflect(this._destroy(free.resource))));
         })
         .then(() => {
           this.free = [];
@@ -376,9 +364,18 @@ export class Pool<T> {
       // When it's synchronous, errors are handled by the try/catch
       // When it's asynchronous, errors are handled by .catch()
       const retVal = this.destroyer(resource);
-      if (retVal && retVal.catch) {
-        // There's nothing we can do here but log the error.
-        retVal.catch(this._logError.bind(this));
+      if (retVal && retVal.then && retVal.catch) {
+        const pendingDestroy = new PendingOperation<T>(this.destroyTimeoutMillis);
+        retVal
+          .then(() => {
+            pendingDestroy.resolve(resource);
+          })
+          .catch((err: Error) => {
+            pendingDestroy.reject(err);
+          });
+
+        // In case of an error there's nothing we can do here but log it.
+        return pendingDestroy.promise.catch(this._logError.bind(this));
       }
       return Promise.resolve(retVal);
     } catch (err) {
