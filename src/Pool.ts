@@ -375,7 +375,7 @@ export class Pool<T> {
           });
 
         // In case of an error there's nothing we can do here but log it.
-        return pendingDestroy.promise.catch(this._logError.bind(this));
+        return pendingDestroy.promise.catch(err => this._logError(err));
       }
       return Promise.resolve(retVal);
     } catch (err) {
