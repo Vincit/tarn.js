@@ -9,6 +9,7 @@ export interface PoolOptions<T> {
   max: number;
   acquireTimeoutMillis?: number;
   createTimeoutMillis?: number;
+  destroyTimeoutMillis?: number;
   idleTimeoutMillis?: number;
   createRetryIntervalMillis?: number;
   reapIntervalMillis?: number;
@@ -31,6 +32,7 @@ export class Pool<T> {
   protected createRetryIntervalMillis: number;
   protected reapIntervalMillis: number;
   protected createTimeoutMillis: number;
+  protected destroyTimeoutMillis: number;
   protected acquireTimeoutMillis: number;
   protected log: (msg: string, level: 'warn') => any;
   protected creator: CallbackOrPromise<T>;
@@ -72,6 +74,12 @@ export class Pool<T> {
       );
     }
 
+    if (!checkOptionalTime(opt.destroyTimeoutMillis)) {
+      throw new Error(
+        'Tarn: invalid opt.destroyTimeoutMillis ' + JSON.stringify(opt.destroyTimeoutMillis)
+      );
+    }
+
     if (!checkOptionalTime(opt.idleTimeoutMillis)) {
       throw new Error(
         'Tarn: invalid opt.idleTimeoutMillis ' + JSON.stringify(opt.idleTimeoutMillis)
@@ -98,6 +106,7 @@ export class Pool<T> {
 
     this.acquireTimeoutMillis = opt.acquireTimeoutMillis || 30000;
     this.createTimeoutMillis = opt.createTimeoutMillis || 30000;
+    this.destroyTimeoutMillis = opt.destroyTimeoutMillis || 5000;
     this.idleTimeoutMillis = opt.idleTimeoutMillis || 30000;
     this.reapIntervalMillis = opt.reapIntervalMillis || 1000;
     this.createRetryIntervalMillis = opt.createRetryIntervalMillis || 200;
@@ -192,8 +201,8 @@ export class Pool<T> {
 
     this.free = newFree;
 
-    //Pool is completely empty, stop reaping.
-    //Next .acquire will start reaping interval again.
+    // Pool is completely empty, stop reaping.
+    // Next .acquire will start reaping interval again.
     if (this.isEmpty()) {
       this._stopReaping();
     }
@@ -221,7 +230,9 @@ export class Pool<T> {
         })
         .then(() => {
           // Now we can destroy all the freed resources.
-          this.free.forEach(free => this._destroy(free.resource));
+          return Promise.all(this.free.map(free => reflect(this._destroy(free.resource))));
+        })
+        .then(() => {
           this.free = [];
           this.pendingAcquires = [];
         })
@@ -354,12 +365,34 @@ export class Pool<T> {
 
   _destroy(resource: T) {
     try {
-      this.destroyer(resource);
+      // this.destroyer can be both synchronous and asynchronous.
+      // When it's synchronous, errors are handled by the try/catch
+      // When it's asynchronous, errors are handled by .catch()
+      const retVal = this.destroyer(resource);
+      if (retVal && retVal.then && retVal.catch) {
+        const pendingDestroy = new PendingOperation<T>(this.destroyTimeoutMillis);
+        retVal
+          .then(() => {
+            pendingDestroy.resolve(resource);
+          })
+          .catch((err: Error) => {
+            pendingDestroy.reject(err);
+          });
+
+        // In case of an error there's nothing we can do here but log it.
+        return pendingDestroy.promise.catch(err => this._logError(err));
+      }
+      return Promise.resolve(retVal);
     } catch (err) {
       // There's nothing we can do here but log the error. This would otherwise
       // leak out as an unhandled exception.
-      this.log('Tarn: resource destroyer threw an exception ' + err.stack, 'warn');
+      this._logError(err);
+      return Promise.resolve();
     }
+  }
+
+  _logError(err: Error) {
+    this.log('Tarn: resource destroyer threw an exception ' + err.stack, 'warn');
   }
 
   _startReaping() {
