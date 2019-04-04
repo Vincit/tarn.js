@@ -31,7 +31,7 @@ const pool = new Pool({
   // validates a connection before it is used. Return true or false
   // from it. If false is returned, the resource is destroyed and a
   // another one is acquired.
-  validate: (resource) {
+  validate: (resource) => {
     return true;
   },
 
