@@ -1,6 +1,6 @@
 {
   "name": "tarn",
-  "version": "1.1.4",
+  "version": "1.1.5",
   "description": "Simple and robust resource pool for node.js",
   "main": "lib/tarn.js",
   "types": "lib/tarn.d.ts",

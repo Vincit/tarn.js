@@ -112,3 +112,12 @@ pool.numPendingCreates()
 // pool cannot be used after this.
 await pool.destroy();
 ```
+
+## Changelog
+
+### 1.1.5 2019-04-06 
+
+- Added changelog #22
+- Handle opt.destroy() being a promise with destroyTimeout #16
+- Explicitly silence bluebird warnings #17
+- Add strict typings via TypeScript #10
