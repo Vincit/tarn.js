@@ -38,6 +38,8 @@ export class Pool<T> {
   protected creator: CallbackOrPromise<T>;
   protected destroyer: (resource: T) => any;
   protected validate: (resource: T) => boolean;
+  protected eventId: number;
+  protected eventHandlers: { [key: string]: Array<(...args: any) => void> };
 
   constructor(opt: PoolOptions<T>) {
     opt = opt || {};
@@ -122,6 +124,9 @@ export class Pool<T> {
     this.pendingAcquires = [];
     this.destroyed = false;
     this.interval = null;
+
+    this.eventId = 0;
+    this.eventHandlers = {};
   }
 
   numUsed() {
@@ -141,22 +146,32 @@ export class Pool<T> {
   }
 
   acquire() {
+    const eventId = this.eventId++;
+    this._executeEventHandlers('acquireRequest', eventId);
+
     const pendingAcquire = new PendingOperation<T>(this.acquireTimeoutMillis);
     this.pendingAcquires.push(pendingAcquire);
 
     // If the acquire fails for whatever reason
     // remove it from the pending queue.
-    pendingAcquire.promise = pendingAcquire.promise.catch(err => {
-      remove(this.pendingAcquires, pendingAcquire);
-
-      return Promise.reject(err);
-    });
+    pendingAcquire.promise = pendingAcquire.promise
+      .then(resource => {
+        this._executeEventHandlers('acquireSuccess', eventId, resource);
+        return resource;
+      })
+      .catch(err => {
+        this._executeEventHandlers('acquireFail', eventId, err);
+        remove(this.pendingAcquires, pendingAcquire);
+        return Promise.reject(err);
+      });
 
     this._tryAcquireOrCreate();
     return pendingAcquire;
   }
 
   release(resource: T) {
+    this._executeEventHandlers('release', resource);
+
     for (let i = 0, l = this.used.length; i < l; ++i) {
       const used = this.used[i];
 
@@ -209,6 +224,9 @@ export class Pool<T> {
   }
 
   destroy() {
+    const eventId = this.eventId++;
+    this._executeEventHandlers('poolDestroyRequest', eventId);
+
     this._stopReaping();
     this.destroyed = true;
 
@@ -236,7 +254,35 @@ export class Pool<T> {
           this.free = [];
           this.pendingAcquires = [];
         })
-    );
+    ).then(res => {
+      this._executeEventHandlers('poolDestroySuccess', eventId);
+      this.eventHandlers = {}; // clear all event handlers on destroy
+      return res;
+    });
+  }
+
+  on(eventName: 'acquireRequest', handler: (eventId: number) => void): void;
+  on(eventName: 'acquireSuccess', handler: (eventId: number, resource: T) => void): void;
+  on(eventName: 'acquireFail', handler: (eventId: number, err: Error) => void): void;
+
+  on(eventName: 'release', handler: (resource: T) => void): void;
+
+  on(eventName: 'createRequest', handler: (eventId: number) => void): void;
+  on(eventName: 'createSuccess', handler: (eventId: number, resource: T) => void): void;
+  on(eventName: 'createFail', handler: (eventId: number, err: Error) => void): void;
+
+  on(eventName: 'destroyRequest', handler: (eventId: number, resource: T) => void): void;
+  on(eventName: 'destroySuccess', handler: (eventId: number, resource: T) => void): void;
+
+  on(eventName: 'startReaping', handler: () => void): void;
+  on(eventName: 'stopReaping', handler: () => void): void;
+
+  on(eventName: 'poolDestroyRequest', handler: (eventId: number) => void): void;
+  on(eventName: 'poolDestroySuccess', handler: (eventId: number) => void): void;
+
+  on(eventName: string, handler: (...args: any) => void): void {
+    const handlerList = this.eventHandlers[eventName] || [];
+    handlerList.push(handler);
   }
 
   _tryAcquireOrCreate() {
@@ -406,6 +452,20 @@ export class Pool<T> {
       clearInterval(this.interval);
     }
     this.interval = null;
+  }
+
+  _executeEventHandlers(eventName: string, ...args: any) {
+    const handlers = this.eventHandlers[eventName] || [];
+
+    handlers.forEach(handler => {
+      try {
+        handler(...args);
+      } catch (err) {
+        // There's nothing we can do here but log the error. This would otherwise
+        // leak out as an unhandled exception.
+        this.log(`Tarn: event handler "${eventName}" threw an exception ${err.stack}`, 'warn');
+      }
+    });
   }
 }
 
