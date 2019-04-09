@@ -112,9 +112,9 @@ pool.numPendingCreates();
 // pool cannot be used after this.
 await pool.destroy();
 
-// Adds synchronous event handlers to for example to allow externally
-// collecting some diagnostic data of pool behaviour. If any of these
-// hooks fail, all errors are catched and warnings logged.
+// The following examples add synchronous event handlers for example to 
+// allow externally collect diagnostic data of pool behaviour.
+// If any of these hooks fail, all errors are catched and warnings are logged.
 
 // resource is acquired from pool
 pool.on('acquireRequest', eventId => { });
