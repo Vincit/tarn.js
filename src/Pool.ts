@@ -380,18 +380,18 @@ export class Pool<T> {
           });
 
         // In case of an error there's nothing we can do here but log it.
-        return pendingDestroy.promise.catch(err => this._logError(err));
+        return pendingDestroy.promise.catch(err => this._logDestroyerError(err));
       }
       return Promise.resolve(retVal);
     } catch (err) {
       // There's nothing we can do here but log the error. This would otherwise
       // leak out as an unhandled exception.
-      this._logError(err);
+      this._logDestroyerError(err);
       return Promise.resolve();
     }
   }
 
-  _logError(err: Error) {
+  _logDestroyerError(err: Error) {
     this.log('Tarn: resource destroyer threw an exception ' + err.stack, 'warn');
   }
 
