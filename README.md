@@ -97,20 +97,51 @@ try {
 pool.release(resource);
 
 // returns the number of non-free resources
-pool.numUsed()
+pool.numUsed();
 
 // returns the number of free resources
-pool.numFree()
+pool.numFree();
 
 // how many acquires are waiting for a resource to be released
-pool.numPendingAcquires()
+pool.numPendingAcquires();
 
 // how many asynchronous create calls are running
-pool.numPendingCreates()
+pool.numPendingCreates();
 
 // waits for all resources to be returned to the pool and destroys them.
 // pool cannot be used after this.
 await pool.destroy();
+
+// Adds synchronous event handlers to for example to allow externally
+// collecting some diagnostic data of pool behaviour. If any of these
+// hooks fail, all errors are catched and warnings logged.
+
+// resource is acquired from pool
+pool.on('acquireRequest', eventId => { });
+pool.on('acquireSuccess', (eventId, resource) => { });
+pool.on('acquireFail', (eventId, err) => { });
+
+// resource returned to pool
+pool.on('release', resource => { });
+
+// resource was created and added to the pool
+pool.on('createRequest', eventId => { });
+pool.on('createSuccess', (eventId, resource) => { });
+pool.on('createFail', (eventId, err) => { });
+
+// resource is destroyed and evicted from pool
+// resource may or may not be invalid when destroySuccess is called
+pool.on('destroyRequest', (eventId, resource) => { });
+pool.on('destroySuccess', (eventId, resource) => { });
+
+// when internal reaping event clock is activated / deactivated
+pool.on('startReaping', () => { });
+pool.on('stopReaping', () => { });
+
+// pool is destroyed (after poolDestroySuccess all event handlers are also cleared)
+pool.on('poolDestroyRequest', eventId => { });
+pool.on('poolDestroySuccess', eventId => { });
+
 ```
 
 ## Changelog
