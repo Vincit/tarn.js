@@ -288,8 +288,8 @@ export class Pool<T> {
     this.emitter.on(event, listener);
   }
 
-  off(event: string | symbol, listener: (...args: any[]) => void): void {
-    this.emitter.off(event, listener);
+  removeListener(event: string | symbol, listener: (...args: any[]) => void): void {
+    this.emitter.removeListener(event, listener);
   }
 
   removeAllListeners(event?: string | symbol | undefined): void {

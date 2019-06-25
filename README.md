@@ -141,6 +141,12 @@ pool.on('stopReaping', () => {});
 // pool is destroyed (after poolDestroySuccess all event handlers are also cleared)
 pool.on('poolDestroyRequest', eventId => {});
 pool.on('poolDestroySuccess', eventId => {});
+
+// remove single event listener
+pool.removeListener(eventName, listener);
+
+// remove all listeners from an event
+pool.removeAllListeners(eventName);
 ```
 
 ## Changelog

@@ -1781,7 +1781,7 @@ describe('Tarn', () => {
       });
 
       it('removing single listener', async () => {
-        pool.off('acquireRequest', removableListener);
+        pool.removeListener('acquireRequest', removableListener);
         const pendingAcquire = pool.acquire();
         const resource = await pendingAcquire.promise;
         expect(listenerCallCount).to.be(5);
