@@ -942,7 +942,7 @@ describe('Tarn', () => {
       let destroyerErrorThrown = false;
       pool = new Pool({
         create() {
-          return {id: 1};
+          return { id: 1 };
         },
         destroy() {
           throw new Error('destroy error');
@@ -953,10 +953,12 @@ describe('Tarn', () => {
           }
         },
         min: 0,
-        max: 10,
+        max: 10
       });
 
-      return pool.acquire().promise.then(resource => {
+      return pool
+        .acquire()
+        .promise.then(resource => {
           pool.release(resource);
         })
         .then(() => {
@@ -971,7 +973,7 @@ describe('Tarn', () => {
       let destroyerErrorThrown = false;
       pool = new Pool({
         create() {
-          return {id: 1};
+          return { id: 1 };
         },
         destroy() {
           return Promise.reject(new Error('destroy error'));
@@ -982,10 +984,12 @@ describe('Tarn', () => {
           }
         },
         min: 0,
-        max: 10,
+        max: 10
       });
 
-      return pool.acquire().promise.then(resource => {
+      return pool
+        .acquire()
+        .promise.then(resource => {
           pool.release(resource);
         })
         .then(() => {
@@ -1001,12 +1005,12 @@ describe('Tarn', () => {
       let destroyerErrorThrown = false;
       pool = new Pool({
         create() {
-          return {id: 1};
+          return { id: 1 };
         },
         destroy() {
-          return new Promise((resolve) => {
+          return new Promise(resolve => {
             setTimeout(resolve, destroyTimeoutMillis * 2);
-          })
+          });
         },
         log(msg) {
           if (msg.includes('resource destroyer') && msg.includes('operation timed')) {
@@ -1015,20 +1019,22 @@ describe('Tarn', () => {
         },
         min: 0,
         max: 10,
-        destroyTimeoutMillis: destroyTimeoutMillis,
+        destroyTimeoutMillis: destroyTimeoutMillis
       });
 
-      return pool.acquire().promise.then(resource => {
+      return pool
+        .acquire()
+        .promise.then(resource => {
           pool.release(resource);
         })
         .then(() => {
           return pool.destroy();
         })
         .then(() => {
-          console.log('abc')
           expect(destroyerErrorThrown).to.equal(true);
         });
-    });  });
+    });
+  });
 
   describe('acquireTimeout', () => {
     it('should fail to acquire opt.max + 1 resources after acquireTimeoutMillis', done => {
@@ -1476,6 +1482,319 @@ describe('Tarn', () => {
           finished = true;
           done(err);
         });
+    });
+  });
+
+  describe('event handler tests', () => {
+    it('simple cases should work', async () => {
+      const eventStats = {};
+      let createCalled = 0;
+      let destroyCalled = 0;
+
+      pool = new Pool({
+        // third create should fail
+        create() {
+          if (createCalled > 1) {
+            return Promise.delay(10).then(() => Promise.reject(new Error('fail')));
+          }
+          return Promise.delay(10).then(() => Promise.resolve({ a: ++createCalled }));
+        },
+
+        // second destory should fail
+        destroy(resource) {
+          if (destroyCalled > 0) {
+            return Promise.delay(10).then(() => Promise.reject(new Error('fail')));
+          }
+          ++destroyCalled;
+          return Promise.delay(10).then(() => Promise.resolve());
+        },
+        min: 0,
+        max: 3,
+        propagateCreateError: true
+      });
+
+      // record resources lifespan and sort events by eventId or event name for those
+      // which are not yet bound to resource
+      function recordEvents(event) {
+        pool.on(event, (first, second, ...args) => {
+          if (!first) {
+            // global event without arguments
+            eventStats[event] = eventStats[event] || [];
+            eventStats[event].push([event]);
+            return;
+          }
+
+          // take id from resource (first, or second parameter) or from first eventId parameter
+          const eventId = first.eventId || (second && second.eventId) || first;
+
+          // if second parameter is resource without event ID
+          // add add original eventId to it
+          if (second && second.a && !second.eventId) {
+            second.eventId = eventId;
+          }
+
+          // group events of record events of single resource
+          eventStats[eventId] = eventStats[eventId] || [];
+          eventStats[eventId].push([event, first, second, ...args]);
+        });
+      }
+
+      recordEvents('acquireRequest');
+      recordEvents('acquireSuccess');
+      recordEvents('acquireFail');
+
+      recordEvents('release');
+
+      recordEvents('createRequest');
+      recordEvents('createSuccess');
+      recordEvents('createFail');
+
+      recordEvents('destroyRequest');
+      recordEvents('destroySuccess');
+      recordEvents('destroyFail');
+
+      recordEvents('startReaping');
+      recordEvents('stopReaping');
+
+      recordEvents('poolDestroyRequest');
+      recordEvents('poolDestroySuccess');
+
+      const pendingResource1 = pool.acquire();
+      const pendingResource2 = pool.acquire();
+      const resource1 = await pendingResource1.promise;
+      const resource2 = await pendingResource2.promise;
+
+      // reaping should have started once by now
+      expect(eventStats['startReaping']).to.have.length(1);
+      expect(eventStats['stopReaping']).to.be.undefined;
+
+      const pendingResource3 = pool.acquire();
+      const failed = await pendingResource3.promise.catch(() => 'did fail');
+      expect(failed).to.equal('did fail');
+
+      pool.release(resource1);
+      pool.release(resource2);
+      await pool.destroy();
+
+      expect(eventStats['startReaping']).to.have.length(1);
+      expect(eventStats['stopReaping']).to.have.length(1);
+
+      const resource1Events = eventStats[resource1.eventId];
+      const resource1AcquireRequestId = resource1Events.find(event => {
+        return event[0].includes('acquire');
+      })[1];
+
+      const resource2Events = eventStats[resource2.eventId];
+      const resource2AcquireRequestId = resource2Events.find(event => {
+        return event[0].includes('acquire');
+      })[1];
+
+      // acquire request events were also emitted for resources
+      const resource1AcquireRequest = eventStats[resource1AcquireRequestId][0];
+      const resource2AcquireRequest = eventStats[resource2AcquireRequestId][0];
+      expect(resource1AcquireRequest[0]).to.be('acquireRequest');
+      expect(resource2AcquireRequest[0]).to.be('acquireRequest');
+
+      // destroying one of resources should have failed
+      const resource1HasFailedDestroy = resource1Events.includes(event => {
+        return event[1] === 'destroyFailed';
+      });
+
+      const resource2HasFailedDestroy = resource2Events.includes(event => {
+        return event[1] === 'destroyFailed';
+      });
+
+      expect(resource1HasFailedDestroy || resource2HasFailedDestroy).to.be.true;
+      expect(resource1HasFailedDestroy && resource2HasFailedDestroy).to.be.false;
+
+      // event ids for request and results match and event arguments too
+      expect(resource1Events).to.have.length(6);
+      expect(resource2Events).to.have.length(6);
+
+      function filterEvents(eventArray, prefix) {
+        return eventArray.filter(event => {
+          return event[0].includes(prefix);
+        });
+      }
+
+      // check that event pair has same eventId to be able to connect request and result
+      function verifyPair(events) {
+        expect(events).to.have.length(2);
+        expect(events[0][1]).to.equal(events[1][1]);
+      }
+
+      verifyPair(filterEvents([resource1AcquireRequest, ...resource1Events], 'acquire'));
+      verifyPair(filterEvents([resource2AcquireRequest, ...resource2Events], 'acquire'));
+      verifyPair(filterEvents(resource1Events, 'create'));
+      verifyPair(filterEvents(resource2Events, 'create'));
+      verifyPair(filterEvents(resource1Events, 'destroy'));
+      verifyPair(filterEvents(resource2Events, 'destroy'));
+
+      // should have one acquire failure
+      const acquireFailures = Object.values(eventStats).filter(events => {
+        return (
+          events.length === 2 && events[0][0] === 'acquireRequest' && events[1][0] === 'acquireFail'
+        );
+      });
+
+      const createFailures = Object.values(eventStats).filter(events => {
+        return (
+          events.length === 2 && events[0][0] === 'createRequest' && events[1][0] === 'createFail'
+        );
+      });
+
+      // should have one aqcuire and one create failure
+      expect(acquireFailures).to.have.length(1);
+      expect(createFailures).to.have.length(1);
+
+      // should have pool destroy events
+      const poolDestroy = Object.values(eventStats).filter(events => {
+        return (
+          events.length === 2 &&
+          events[0][0] === 'poolDestroyRequest' &&
+          events[1][0] === 'poolDestroySuccess'
+        );
+      });
+      expect(poolDestroy).to.have.length(1);
+
+      // should have no extra events
+      const allEvents = [].concat(...Object.values(eventStats));
+      expect(allEvents).to.have.length(22);
+
+      // verify event arguments
+      allEvents.forEach(event => {
+        const [eventName, ...args] = event;
+
+        if (eventName === 'release') {
+          expect(args[0]).to.be.object;
+          expect(args[1]).to.be.undefined;
+          expect(args[2]).to.be.undefined;
+        } else if (eventName === 'acquireRequest') {
+          expect(args[0]).to.be.number;
+          expect(args[1]).to.be.undefined;
+          expect(args[2]).to.be.undefined;
+        } else if (eventName === 'acquireSuccess') {
+          expect(args[0]).to.be.number;
+          expect(args[1]).to.be.object;
+          expect(args[2]).to.be.undefined;
+        } else if (eventName === 'acquireFail') {
+          expect(args[0]).to.be.number;
+          expect(args[1]).to.be.error;
+          expect(args[2]).to.be.undefined;
+        } else if (eventName === 'createRequest') {
+          expect(args[0]).to.be.number;
+          expect(args[1]).to.be.undefined;
+          expect(args[2]).to.be.undefined;
+        } else if (eventName === 'createSuccess') {
+          expect(args[0]).to.be.number;
+          expect(args[1]).to.be.object;
+          expect(args[2]).to.be.undefined;
+        } else if (eventName === 'createFail') {
+          expect(args[0]).to.be.number;
+          expect(args[1]).to.be.error;
+          expect(args[2]).to.be.undefined;
+        } else if (eventName === 'destroyRequest') {
+          expect(args[0]).to.be.number;
+          expect(args[1]).to.be.object;
+          expect(args[2]).to.be.undefined;
+        } else if (eventName === 'destroySuccess') {
+          expect(args[0]).to.be.number;
+          expect(args[1]).to.be.object;
+          expect(args[2]).to.be.undefined;
+        } else if (eventName === 'destroyFail') {
+          expect(args[0]).to.be.number;
+          expect(args[1]).to.be.object;
+          expect(args[2]).to.be.error;
+        } else if (eventName === 'startReaping') {
+          expect(args[0]).to.be.undefined;
+          expect(args[1]).to.be.undefined;
+          expect(args[2]).to.be.undefined;
+        } else if (eventName === 'stopReaping') {
+          expect(args[0]).to.be.undefined;
+          expect(args[1]).to.be.undefined;
+          expect(args[2]).to.be.undefined;
+        } else if (eventName === 'poolDestroyRequest') {
+          expect(args[0]).to.be.number;
+          expect(args[1]).to.be.undefined;
+          expect(args[2]).to.be.undefined;
+        } else if (eventName === 'poolDestroySuccess') {
+          expect(args[0]).to.be.number;
+          expect(args[1]).to.be.undefined;
+          expect(args[2]).to.be.undefined;
+        } else {
+          expect('Invalid event type').to.be.false;
+        }
+      });
+    });
+
+    describe('running / removing listeners', () => {
+      let listenerCallCount = 0;
+      let removableListener = () => {
+        listenerCallCount++;
+        throw new Error();
+      };
+
+      beforeEach(() => {
+        listenerCallCount = 0;
+        pool = new Pool({
+          create() {
+            return Promise.delay(10).then(() => Promise.resolve({ a: 0 }));
+          },
+          destroy(resource) {
+            return Promise.delay(10).then(() => Promise.resolve());
+          },
+          min: 0,
+          max: 3,
+          propagateCreateError: true
+        });
+
+        pool.on('acquireRequest', removableListener);
+        pool.on('acquireRequest', () => {
+          listenerCallCount++;
+          throw new Error();
+        });
+        pool.on('acquireRequest', () => {
+          listenerCallCount++;
+          throw new Error();
+        });
+
+        pool.on('createRequest', removableListener);
+        pool.on('createRequest', () => {
+          listenerCallCount++;
+          throw new Error();
+        });
+        pool.on('createRequest', () => {
+          listenerCallCount++;
+          throw new Error();
+        });
+      });
+
+      afterEach(() => {
+        return pool.destroy();
+      });
+
+      it('broken listener should not stop running other listeners', async () => {
+        const pendingAcquire = pool.acquire();
+        const resource = await pendingAcquire.promise;
+        expect(listenerCallCount).to.be(6);
+        pool.release(resource);
+      });
+
+      it('removing single listener', async () => {
+        pool.off('acquireRequest', removableListener);
+        const pendingAcquire = pool.acquire();
+        const resource = await pendingAcquire.promise;
+        expect(listenerCallCount).to.be(5);
+        pool.release(resource);
+      });
+
+      it('removing all listeners of event', async () => {
+        pool.removeAllListeners('acquireRequest');
+        const pendingAcquire = pool.acquire();
+        const resource = await pendingAcquire.promise;
+        expect(listenerCallCount).to.be(3);
+        pool.release(resource);
+      });
     });
   });
 
