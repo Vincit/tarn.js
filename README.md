@@ -20,24 +20,23 @@ npm install tarn
 const { Pool, TimeoutError } = require('tarn');
 
 const pool = new Pool({
-
   // function that creates a resource. You can either pass the resource
   // to the callback or return a promise that resolves the resource
   // (but not both).
-  create: (cb) => {
+  create: cb => {
     cb(null, new SomeResource());
   },
 
   // validates a connection before it is used. Return true or false
   // from it. If false is returned, the resource is destroyed and a
   // another one is acquired.
-  validate: (resource) => {
+  validate: resource => {
     return true;
   },
 
   // function that destroys a resource. This is always synchronous
   // as nothing waits for the return value.
-  destroy: (someResource) => {
+  destroy: someResource => {
     someResource.cleanup();
   },
 
@@ -97,25 +96,66 @@ try {
 pool.release(resource);
 
 // returns the number of non-free resources
-pool.numUsed()
+pool.numUsed();
 
 // returns the number of free resources
-pool.numFree()
+pool.numFree();
 
 // how many acquires are waiting for a resource to be released
-pool.numPendingAcquires()
+pool.numPendingAcquires();
 
 // how many asynchronous create calls are running
-pool.numPendingCreates()
+pool.numPendingCreates();
 
 // waits for all resources to be returned to the pool and destroys them.
 // pool cannot be used after this.
 await pool.destroy();
+
+// The following examples add synchronous event handlers for example to
+// allow externally collect diagnostic data of pool behaviour.
+// If any of these hooks fail, all errors are catched and warnings are logged.
+
+// resource is acquired from pool
+pool.on('acquireRequest', eventId => {});
+pool.on('acquireSuccess', (eventId, resource) => {});
+pool.on('acquireFail', (eventId, err) => {});
+
+// resource returned to pool
+pool.on('release', resource => {});
+
+// resource was created and added to the pool
+pool.on('createRequest', eventId => {});
+pool.on('createSuccess', (eventId, resource) => {});
+pool.on('createFail', (eventId, err) => {});
+
+// resource is destroyed and evicted from pool
+// resource may or may not be invalid when destroySuccess / destroyFail is called
+pool.on('destroyRequest', (eventId, resource) => {});
+pool.on('destroySuccess', (eventId, resource) => {});
+pool.on('destroyFail', (eventId, resource, err) => {});
+
+// when internal reaping event clock is activated / deactivated
+pool.on('startReaping', () => {});
+pool.on('stopReaping', () => {});
+
+// pool is destroyed (after poolDestroySuccess all event handlers are also cleared)
+pool.on('poolDestroyRequest', eventId => {});
+pool.on('poolDestroySuccess', eventId => {});
+
+// remove single event listener
+pool.removeListener(eventName, listener);
+
+// remove all listeners from an event
+pool.removeAllListeners(eventName);
 ```
 
 ## Changelog
 
-### 1.1.5 2019-04-06 
+### Master
+
+- Diagnostic event handlers to allow monitoring pool behaviour #14 #23
+
+### 1.1.5 2019-04-06
 
 - Added changelog #22
 - Handle opt.destroy() being a promise with destroyTimeout #16

@@ -1,6 +1,7 @@
 import { PendingOperation } from './PendingOperation';
 import { Resource } from './Resource';
 import { checkOptionalTime, delay, duration, now, reflect, tryPromise } from './utils';
+import { EventEmitter } from 'events';
 
 export interface PoolOptions<T> {
   create: CallbackOrPromise<T>;
@@ -38,6 +39,8 @@ export class Pool<T> {
   protected creator: CallbackOrPromise<T>;
   protected destroyer: (resource: T) => any;
   protected validate: (resource: T) => boolean;
+  protected eventId: number;
+  protected emitter = new EventEmitter();
 
   constructor(opt: PoolOptions<T>) {
     opt = opt || {};
@@ -122,6 +125,8 @@ export class Pool<T> {
     this.pendingAcquires = [];
     this.destroyed = false;
     this.interval = null;
+
+    this.eventId = 1;
   }
 
   numUsed() {
@@ -141,22 +146,32 @@ export class Pool<T> {
   }
 
   acquire() {
+    const eventId = this.eventId++;
+    this._executeEventHandlers('acquireRequest', eventId);
+
     const pendingAcquire = new PendingOperation<T>(this.acquireTimeoutMillis);
     this.pendingAcquires.push(pendingAcquire);
 
     // If the acquire fails for whatever reason
     // remove it from the pending queue.
-    pendingAcquire.promise = pendingAcquire.promise.catch(err => {
-      remove(this.pendingAcquires, pendingAcquire);
-
-      return Promise.reject(err);
-    });
+    pendingAcquire.promise = pendingAcquire.promise
+      .then(resource => {
+        this._executeEventHandlers('acquireSuccess', eventId, resource);
+        return resource;
+      })
+      .catch(err => {
+        this._executeEventHandlers('acquireFail', eventId, err);
+        remove(this.pendingAcquires, pendingAcquire);
+        return Promise.reject(err);
+      });
 
     this._tryAcquireOrCreate();
     return pendingAcquire;
   }
 
   release(resource: T) {
+    this._executeEventHandlers('release', resource);
+
     for (let i = 0, l = this.used.length; i < l; ++i) {
       const used = this.used[i];
 
@@ -209,6 +224,9 @@ export class Pool<T> {
   }
 
   destroy() {
+    const eventId = this.eventId++;
+    this._executeEventHandlers('poolDestroyRequest', eventId);
+
     this._stopReaping();
     this.destroyed = true;
 
@@ -236,7 +254,44 @@ export class Pool<T> {
           this.free = [];
           this.pendingAcquires = [];
         })
-    );
+    ).then(res => {
+      this._executeEventHandlers('poolDestroySuccess', eventId);
+      this.emitter.removeAllListeners();
+      return res;
+    });
+  }
+
+  // Event id can be used to track, which success / failure corresponds with which request
+  on(eventName: 'acquireRequest', handler: (eventId: number) => void): void;
+  on(eventName: 'acquireSuccess', handler: (eventId: number, resource: T) => void): void;
+  on(eventName: 'acquireFail', handler: (eventId: number, err: Error) => void): void;
+
+  on(eventName: 'release', handler: (resource: T) => void): void;
+
+  on(eventName: 'createRequest', handler: (eventId: number) => void): void;
+  on(eventName: 'createSuccess', handler: (eventId: number, resource: T) => void): void;
+  on(eventName: 'createFail', handler: (eventId: number, err: Error) => void): void;
+
+  on(eventName: 'destroyRequest', handler: (eventId: number, resource: T) => void): void;
+  on(eventName: 'destroySuccess', handler: (eventId: number, resource: T) => void): void;
+  on(eventName: 'destroyFail', handler: (eventId: number, resource: T, err: Error) => void): void;
+
+  on(eventName: 'startReaping', handler: () => void): void;
+  on(eventName: 'stopReaping', handler: () => void): void;
+
+  on(eventName: 'poolDestroyRequest', handler: (eventId: number) => void): void;
+  on(eventName: 'poolDestroySuccess', handler: (eventId: number) => void): void;
+
+  on(event: string | symbol, listener: (...args: any) => void): void {
+    this.emitter.on(event, listener);
+  }
+
+  removeListener(event: string | symbol, listener: (...args: any[]) => void): void {
+    this.emitter.removeListener(event, listener);
+  }
+
+  removeAllListeners(event?: string | symbol | undefined): void {
+    this.emitter.removeAllListeners(event);
   }
 
   _tryAcquireOrCreate() {
@@ -340,6 +395,9 @@ export class Pool<T> {
   }
 
   _create() {
+    const eventId = this.eventId++;
+    this._executeEventHandlers('createRequest', eventId);
+
     const pendingCreate = new PendingOperation<T>(this.createTimeoutMillis);
     this.pendingCreates.push(pendingCreate);
 
@@ -350,6 +408,7 @@ export class Pool<T> {
 
         // Not returned on purpose.
         pendingCreate.resolve(resource);
+        this._executeEventHandlers('createSuccess', eventId, resource);
         return null;
       })
       .catch(err => {
@@ -357,6 +416,7 @@ export class Pool<T> {
 
         // Not returned on purpose.
         pendingCreate.reject(err);
+        this._executeEventHandlers('createFail', eventId, err);
         return null;
       });
 
@@ -364,6 +424,9 @@ export class Pool<T> {
   }
 
   _destroy(resource: T) {
+    const eventId = this.eventId++;
+    this._executeEventHandlers('destroyRequest', eventId, resource);
+
     try {
       // this.destroyer can be both synchronous and asynchronous.
       // When it's synchronous, errors are handled by the try/catch
@@ -380,32 +443,56 @@ export class Pool<T> {
           });
 
         // In case of an error there's nothing we can do here but log it.
-        return pendingDestroy.promise.catch(err => this._logError(err));
+        return pendingDestroy.promise
+          .then(res => {
+            this._executeEventHandlers('destroySuccess', eventId, resource);
+            return res;
+          })
+          .catch(err => this._logDestroyerError(eventId, resource, err));
       }
+
+      this._executeEventHandlers('destroySuccess', eventId, resource);
       return Promise.resolve(retVal);
     } catch (err) {
       // There's nothing we can do here but log the error. This would otherwise
       // leak out as an unhandled exception.
-      this._logError(err);
+      this._logDestroyerError(eventId, resource, err);
       return Promise.resolve();
     }
   }
 
-  _logError(err: Error) {
+  _logDestroyerError(eventId: number, resource: T, err: Error) {
+    this._executeEventHandlers('destroyFail', eventId, resource, err);
     this.log('Tarn: resource destroyer threw an exception ' + err.stack, 'warn');
   }
 
   _startReaping() {
     if (!this.interval) {
+      this._executeEventHandlers('startReaping');
       this.interval = setInterval(() => this.check(), this.reapIntervalMillis);
     }
   }
 
   _stopReaping() {
     if (this.interval !== null) {
+      this._executeEventHandlers('stopReaping');
       clearInterval(this.interval);
     }
     this.interval = null;
+  }
+
+  _executeEventHandlers(eventName: string, ...args: any) {
+    const listeners = this.emitter.listeners(eventName);
+    // just calling .emit() would stop running rest of the listeners if one them fails
+    listeners.forEach(listener => {
+      try {
+        listener(...args);
+      } catch (err) {
+        // There's nothing we can do here but log the error. This would otherwise
+        // leak out as an unhandled exception.
+        this.log(`Tarn: event handler "${eventName}" threw an exception ${err.stack}`, 'warn');
+      }
+    });
   }
 }
 
