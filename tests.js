@@ -1769,7 +1769,7 @@ describe('Tarn', () => {
         });
       });
 
-      afterEach(() => {
+      afterEach(async () => {
         return pool.destroy();
       });
 
@@ -1794,6 +1794,12 @@ describe('Tarn', () => {
         const resource = await pendingAcquire.promise;
         expect(listenerCallCount).to.be(3);
         pool.release(resource);
+      });
+
+      it('destroy removes all event listeners', async () => {
+        expect(pool.emitter.eventNames()).to.have.length(2);
+        await pool.destroy();
+        expect(pool.emitter.eventNames()).to.have.length(0);
       });
     });
   });
