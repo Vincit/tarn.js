@@ -40,7 +40,6 @@ export class Pool<T> {
   protected destroyer: (resource: T) => any;
   protected validate: (resource: T) => boolean;
   protected eventId: number;
-  protected eventHandlers: { [key: string]: Array<(...args: any) => void> };
   protected emitter = new EventEmitter();
 
   constructor(opt: PoolOptions<T>) {
@@ -128,7 +127,6 @@ export class Pool<T> {
     this.interval = null;
 
     this.eventId = 1;
-    this.eventHandlers = {};
   }
 
   numUsed() {
@@ -258,7 +256,7 @@ export class Pool<T> {
         })
     ).then(res => {
       this._executeEventHandlers('poolDestroySuccess', eventId);
-      this.eventHandlers = {}; // clear all event handlers on destroy
+      this.emitter.removeAllListeners();
       return res;
     });
   }
