@@ -427,38 +427,25 @@ export class Pool<T> {
     const eventId = this.eventId++;
     this._executeEventHandlers('destroyRequest', eventId, resource);
 
-    try {
-      // this.destroyer can be both synchronous and asynchronous.
-      // When it's synchronous, errors are handled by the try/catch
-      // When it's asynchronous, errors are handled by .catch()
-      const retVal = this.destroyer(resource);
-      if (retVal && retVal.then && retVal.catch) {
-        const pendingDestroy = new PendingOperation<T>(this.destroyTimeoutMillis);
-        retVal
-          .then(() => {
-            pendingDestroy.resolve(resource);
-          })
-          .catch((err: Error) => {
-            pendingDestroy.reject(err);
-          });
+    // this.destroyer can be both synchronous and asynchronous.
+    // so we wrap it to promise to get all exceptions through same pipeline
+    const pendingDestroy = new PendingOperation<T>(this.destroyTimeoutMillis);
+    const retVal = Promise.resolve().then(() => this.destroyer(resource));
+    retVal
+      .then(() => {
+        pendingDestroy.resolve(resource);
+      })
+      .catch((err: Error) => {
+        pendingDestroy.reject(err);
+      });
 
-        // In case of an error there's nothing we can do here but log it.
-        return pendingDestroy.promise
-          .then(res => {
-            this._executeEventHandlers('destroySuccess', eventId, resource);
-            return res;
-          })
-          .catch(err => this._logDestroyerError(eventId, resource, err));
-      }
-
-      this._executeEventHandlers('destroySuccess', eventId, resource);
-      return Promise.resolve(retVal);
-    } catch (err) {
-      // There's nothing we can do here but log the error. This would otherwise
-      // leak out as an unhandled exception.
-      this._logDestroyerError(eventId, resource, err);
-      return Promise.resolve();
-    }
+    // In case of an error there's nothing we can do here but log it.
+    return pendingDestroy.promise
+      .then(res => {
+        this._executeEventHandlers('destroySuccess', eventId, resource);
+        return res;
+      })
+      .catch(err => this._logDestroyerError(eventId, resource, err));
   }
 
   _logDestroyerError(eventId: number, resource: T, err: Error) {
