@@ -160,6 +160,7 @@ pool.removeAllListeners(eventName);
 ### Master
 
 - Diagnostic event handlers to allow monitoring pool behaviour #14 #23
+- pool.destroy() now always waits for all pending destroys to finish before resolving #29
 
 ### 1.1.5 2019-04-06
 
