@@ -1277,7 +1277,7 @@ describe('Tarn', () => {
           expect(pool.numUsed()).to.equal(1);
           expect(pool.numFree()).to.equal(2);
 
-          return Promise.delay(60);
+          return Promise.delay(65);
         })
         .then(() => {
           expect(destroyed).to.eql([{ a: 0 }, { a: 1 }]);
@@ -1325,7 +1325,7 @@ describe('Tarn', () => {
         })
         .then(() => {
           expect(pool.interval).to.not.equal(null);
-          return Promise.delay(60);
+          return Promise.delay(65);
         })
         .then(() => {
           expect(pool.interval).to.equal(null);

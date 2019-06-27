@@ -204,7 +204,7 @@ export class Pool<T> {
 
     this.free.forEach(free => {
       if (
-        duration(timestamp, free.timestamp) > this.idleTimeoutMillis &&
+        duration(timestamp, free.timestamp) >= this.idleTimeoutMillis &&
         numDestroyed < maxDestroy
       ) {
         numDestroyed++;
