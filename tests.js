@@ -1680,61 +1680,61 @@ describe('Tarn', () => {
         const [eventName, ...args] = event;
 
         if (eventName === 'release') {
-          expect(args[0]).to.be.object;
-          expect(args[1]).to.be.undefined;
-          expect(args[2]).to.be.undefined;
+          expect(args[0]).to.be.an(Object);
+          expect(args[1]).to.be(undefined);
+          expect(args[2]).to.be(undefined);
         } else if (eventName === 'acquireRequest') {
-          expect(args[0]).to.be.number;
-          expect(args[1]).to.be.undefined;
-          expect(args[2]).to.be.undefined;
+          expect(args[0]).to.be.a('number');
+          expect(args[1]).to.be(undefined);
+          expect(args[2]).to.be(undefined);
         } else if (eventName === 'acquireSuccess') {
-          expect(args[0]).to.be.number;
-          expect(args[1]).to.be.object;
-          expect(args[2]).to.be.undefined;
+          expect(args[0]).to.be.a('number');
+          expect(args[1]).to.be.an(Object);
+          expect(args[2]).to.be(undefined);
         } else if (eventName === 'acquireFail') {
-          expect(args[0]).to.be.number;
-          expect(args[1]).to.be.error;
-          expect(args[2]).to.be.undefined;
+          expect(args[0]).to.be.a('number');
+          expect(args[1]).to.be.an(Error);
+          expect(args[2]).to.be(undefined);
         } else if (eventName === 'createRequest') {
-          expect(args[0]).to.be.number;
-          expect(args[1]).to.be.undefined;
-          expect(args[2]).to.be.undefined;
+          expect(args[0]).to.be.a('number');
+          expect(args[1]).to.be(undefined);
+          expect(args[2]).to.be(undefined);
         } else if (eventName === 'createSuccess') {
-          expect(args[0]).to.be.number;
-          expect(args[1]).to.be.object;
-          expect(args[2]).to.be.undefined;
+          expect(args[0]).to.be.a('number');
+          expect(args[1]).to.be.an(Object);
+          expect(args[2]).to.be(undefined);
         } else if (eventName === 'createFail') {
-          expect(args[0]).to.be.number;
-          expect(args[1]).to.be.error;
-          expect(args[2]).to.be.undefined;
+          expect(args[0]).to.be.a('number');
+          expect(args[1]).to.be.an(Error);
+          expect(args[2]).to.be(undefined);
         } else if (eventName === 'destroyRequest') {
-          expect(args[0]).to.be.number;
-          expect(args[1]).to.be.object;
-          expect(args[2]).to.be.undefined;
+          expect(args[0]).to.be.a('number');
+          expect(args[1]).to.be.an(Object);
+          expect(args[2]).to.be(undefined);
         } else if (eventName === 'destroySuccess') {
-          expect(args[0]).to.be.number;
-          expect(args[1]).to.be.object;
-          expect(args[2]).to.be.undefined;
+          expect(args[0]).to.be.a('number');
+          expect(args[1]).to.be.an(Object);
+          expect(args[2]).to.be(undefined);
         } else if (eventName === 'destroyFail') {
-          expect(args[0]).to.be.number;
-          expect(args[1]).to.be.object;
-          expect(args[2]).to.be.error;
+          expect(args[0]).to.be.a('number');
+          expect(args[1]).to.be.an(Object);
+          expect(args[2]).to.be.an(Error);
         } else if (eventName === 'startReaping') {
-          expect(args[0]).to.be.undefined;
-          expect(args[1]).to.be.undefined;
-          expect(args[2]).to.be.undefined;
+          expect(args[0]).to.be(undefined);
+          expect(args[1]).to.be(undefined);
+          expect(args[2]).to.be(undefined);
         } else if (eventName === 'stopReaping') {
-          expect(args[0]).to.be.undefined;
-          expect(args[1]).to.be.undefined;
-          expect(args[2]).to.be.undefined;
+          expect(args[0]).to.be(undefined);
+          expect(args[1]).to.be(undefined);
+          expect(args[2]).to.be(undefined);
         } else if (eventName === 'poolDestroyRequest') {
-          expect(args[0]).to.be.number;
-          expect(args[1]).to.be.undefined;
-          expect(args[2]).to.be.undefined;
+          expect(args[0]).to.be.a('number');
+          expect(args[1]).to.be(undefined);
+          expect(args[2]).to.be(undefined);
         } else if (eventName === 'poolDestroySuccess') {
-          expect(args[0]).to.be.number;
-          expect(args[1]).to.be.undefined;
-          expect(args[2]).to.be.undefined;
+          expect(args[0]).to.be.a('number');
+          expect(args[1]).to.be(undefined);
+          expect(args[2]).to.be(undefined);
         } else {
           expect('Invalid event type').to.be.false;
         }
