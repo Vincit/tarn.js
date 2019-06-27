@@ -1048,6 +1048,51 @@ describe('Tarn', () => {
           expect(destroyerErrorThrown).to.equal(true);
         });
     });
+
+    it('should wait for all resource destroys to finish before returning', () => {
+      let destroyDelay = 200;
+      pool = new Pool({
+        create: () => {
+          return Promise.resolve({});
+        },
+        destroy(res) {
+          destroyDelay -= 50;
+          return Promise.delay(destroyDelay).then(() => {
+            res.destroyed = true;
+          });
+        },
+        reapIntervalMillis: 10,
+        idleTimeoutMillis: 1,
+        min: 0,
+        max: 10
+      });
+
+      return Promise.all([
+        pool.acquire().promise,
+        pool.acquire().promise,
+        pool.acquire().promise,
+        pool.acquire().promise
+      ])
+        .then(resources => {
+          pool.release(resources[0]);
+          pool.release(resources[1]);
+          pool.release(resources[2]);
+          pool.release(resources[3]);
+
+          // reaping should have started destroying these resources already
+          return Promise.delay(30).then(() => resources);
+        })
+        .then(resources => {
+          // pool destroy should wait that all destroys are completed
+          return pool.destroy().then(() => resources);
+        })
+        .then(resources => {
+          expect(resources[0].destroyed).to.be.ok();
+          expect(resources[1].destroyed).to.be.ok();
+          expect(resources[2].destroyed).to.be.ok();
+          expect(resources[3].destroyed).to.be.ok();
+        });
+    });
   });
 
   describe('acquireTimeout', () => {
