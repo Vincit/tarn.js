@@ -40,6 +40,9 @@ const pool = new Pool({
     someResource.cleanup();
   },
 
+  // logger function, noop by default
+  log: (message, logLevel) => console.log(`${logLevel}: ${message}`)
+
   // minimum size
   min: 2,
 

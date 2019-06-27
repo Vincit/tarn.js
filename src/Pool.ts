@@ -102,6 +102,28 @@ export class Pool<T> {
       );
     }
 
+    const allowedKeys: { [key: string]: boolean } = {
+      create: true,
+      validate: true,
+      destroy: true,
+      log: true,
+      min: true,
+      max: true,
+      acquireTimeoutMillis: true,
+      createTimeoutMillis: true,
+      destroyTimeoutMillis: true,
+      idleTimeoutMillis: true,
+      reapIntervalMillis: true,
+      createRetryIntervalMillis: true,
+      propagateCreateError: true
+    };
+
+    for (let key of Object.keys(opt)) {
+      if (!allowedKeys[key]) {
+        throw new Error(`Tarn: unsupported option opt.${key}`);
+      }
+    }
+
     this.creator = opt.create;
     this.destroyer = opt.destroy;
     this.validate = typeof opt.validate === 'function' ? opt.validate : () => true;
