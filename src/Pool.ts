@@ -26,6 +26,7 @@ export class Pool<T> {
   protected free: Resource<T>[];
   protected pendingCreates: PendingOperation<T>[];
   protected pendingAcquires: PendingOperation<T>[];
+  protected pendingDestroys: PendingOperation<T>[];
   protected interval: NodeJS.Timer | null;
   protected destroyed: boolean = false;
   protected propagateCreateError: boolean;
@@ -145,6 +146,7 @@ export class Pool<T> {
 
     this.pendingCreates = [];
     this.pendingAcquires = [];
+    this.pendingDestroys = [];
     this.destroyed = false;
     this.interval = null;
 
@@ -271,6 +273,10 @@ export class Pool<T> {
         .then(() => {
           // Now we can destroy all the freed resources.
           return Promise.all(this.free.map(free => reflect(this._destroy(free.resource))));
+        })
+        .then(() => {
+          // Also wait rest of the pending destroys to finish
+          return Promise.all(this.pendingDestroys.map(pd => pd.promise));
         })
         .then(() => {
           this.free = [];
@@ -453,6 +459,7 @@ export class Pool<T> {
     // so we wrap it to promise to get all exceptions through same pipeline
     const pendingDestroy = new PendingOperation<T>(this.destroyTimeoutMillis);
     const retVal = Promise.resolve().then(() => this.destroyer(resource));
+
     retVal
       .then(() => {
         pendingDestroy.resolve(resource);
@@ -461,13 +468,20 @@ export class Pool<T> {
         pendingDestroy.reject(err);
       });
 
+    this.pendingDestroys.push(pendingDestroy);
+
     // In case of an error there's nothing we can do here but log it.
     return pendingDestroy.promise
       .then(res => {
         this._executeEventHandlers('destroySuccess', eventId, resource);
         return res;
       })
-      .catch(err => this._logDestroyerError(eventId, resource, err));
+      .catch(err => this._logDestroyerError(eventId, resource, err))
+      .then(res => {
+        const index = this.pendingDestroys.findIndex(pd => pd === pendingDestroy);
+        this.pendingDestroys.splice(index, 1);
+        return res;
+      });
   }
 
   _logDestroyerError(eventId: number, resource: T, err: Error) {
