@@ -21,7 +21,7 @@ const { Pool, TimeoutError } = require('tarn');
 
 const pool = new Pool({
   // function that creates a resource. You can either pass the resource
-  // to the callback or return a promise that resolves the resource
+  // to the callback(error, resource) or return a promise that resolves the resource
   // (but not both).
   create: cb => {
     cb(null, new SomeResource());
@@ -34,8 +34,9 @@ const pool = new Pool({
     return true;
   },
 
-  // function that destroys a resource. This is always synchronous
-  // as nothing waits for the return value.
+  // function that destroys a resource, should return promise if
+  // destroying is asynchronous operation
+  // (destroy does not support callback syntax like create)
   destroy: someResource => {
     someResource.cleanup();
   },
@@ -81,7 +82,9 @@ const pool = new Pool({
 // after `acquireTimeoutMillis` if a resource could not be acquired.
 const acquire = pool.acquire();
 
-// acquire can be aborted using the abort method
+// acquire can be aborted using the abort method.
+// If acquire had triggered creating new resource to the pool
+// creation will continue and it is not aborted.
 acquire.abort();
 
 // the acquire object has a promise property that gets reolved with
@@ -157,6 +160,7 @@ pool.removeAllListeners(eventName);
 ### Master
 
 - Diagnostic event handlers to allow monitoring pool behaviour #14 #23
+- pool.destroy() now always waits for all pending destroys to finish before resolving #29
 
 ### 1.1.5 2019-04-06
 
