@@ -1,6 +1,7 @@
 /// <reference types="node" />
 import { PendingOperation } from './PendingOperation';
 import { Resource } from './Resource';
+import { EventEmitter } from 'events';
 export interface PoolOptions<T> {
   create: CallbackOrPromise<T>;
   destroy: (resource: T) => any;
@@ -23,6 +24,7 @@ export declare class Pool<T> {
   protected free: Resource<T>[];
   protected pendingCreates: PendingOperation<T>[];
   protected pendingAcquires: PendingOperation<T>[];
+  protected pendingDestroys: PendingOperation<T>[];
   protected interval: NodeJS.Timer | null;
   protected destroyed: boolean;
   protected propagateCreateError: boolean;
@@ -36,6 +38,8 @@ export declare class Pool<T> {
   protected creator: CallbackOrPromise<T>;
   protected destroyer: (resource: T) => any;
   protected validate: (resource: T) => boolean;
+  protected eventId: number;
+  protected emitter: EventEmitter;
   constructor(opt: PoolOptions<T>);
   numUsed(): number;
   numFree(): number;
@@ -49,6 +53,22 @@ export declare class Pool<T> {
     | import('./PromiseInspection').PromiseInspection<{}>
     | import('./PromiseInspection').PromiseInspection<void>
   >;
+  on(eventName: 'acquireRequest', handler: (eventId: number) => void): void;
+  on(eventName: 'acquireSuccess', handler: (eventId: number, resource: T) => void): void;
+  on(eventName: 'acquireFail', handler: (eventId: number, err: Error) => void): void;
+  on(eventName: 'release', handler: (resource: T) => void): void;
+  on(eventName: 'createRequest', handler: (eventId: number) => void): void;
+  on(eventName: 'createSuccess', handler: (eventId: number, resource: T) => void): void;
+  on(eventName: 'createFail', handler: (eventId: number, err: Error) => void): void;
+  on(eventName: 'destroyRequest', handler: (eventId: number, resource: T) => void): void;
+  on(eventName: 'destroySuccess', handler: (eventId: number, resource: T) => void): void;
+  on(eventName: 'destroyFail', handler: (eventId: number, resource: T, err: Error) => void): void;
+  on(eventName: 'startReaping', handler: () => void): void;
+  on(eventName: 'stopReaping', handler: () => void): void;
+  on(eventName: 'poolDestroyRequest', handler: (eventId: number) => void): void;
+  on(eventName: 'poolDestroySuccess', handler: (eventId: number) => void): void;
+  removeListener(event: string | symbol, listener: (...args: any[]) => void): void;
+  removeAllListeners(event?: string | symbol | undefined): void;
   _tryAcquireOrCreate(): void;
   _hasFreeResources(): boolean;
   _doAcquire(): void;
@@ -57,10 +77,11 @@ export declare class Pool<T> {
   _shouldCreateMoreResources(): boolean;
   _doCreate(): void;
   _create(): PendingOperation<T>;
-  _destroy(resource: T): Promise<any>;
-  _logError(err: Error): void;
+  _destroy(resource: T): Promise<void | T>;
+  _logDestroyerError(eventId: number, resource: T, err: Error): void;
   _startReaping(): void;
   _stopReaping(): void;
+  _executeEventHandlers(eventName: string, ...args: any): void;
 }
 export declare type Callback<T> = (err: Error | null, resource: T) => any;
 export declare type CallbackOrPromise<T> = (cb: Callback<T>) => any | (() => Promise<T>);
