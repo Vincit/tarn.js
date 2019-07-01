@@ -159,7 +159,11 @@ pool.removeAllListeners(eventName);
 
 ### Master
 
+### 1.2.0 2019-06-02
+
+- Passing unknown options throws an error #19 #32
 - Diagnostic event handlers to allow monitoring pool behaviour #14 #23
+- Dropped node 6 support #25 #28
 - pool.destroy() now always waits for all pending destroys to finish before resolving #29
 
 ### 1.1.5 2019-04-06
