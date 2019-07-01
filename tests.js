@@ -369,6 +369,20 @@ describe('Tarn', () => {
         expect(err.message).to.equal('Tarn: invalid opt.createRetryIntervalMillis 0');
       });
     });
+
+    it('should fail if unknown option passed', () => {
+      expect(() => {
+        pool = new Pool({
+          create: () => {},
+          destroy() {},
+          min: 2,
+          max: 10,
+          imUnreal: undefined
+        });
+      }).to.throwException(err => {
+        expect(err.message).to.equal('Tarn: unsupported option opt.imUnreal');
+      });
+    });
   });
 
   describe('acquire', () => {
