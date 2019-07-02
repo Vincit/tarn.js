@@ -1,4 +1,3 @@
-/// <reference types="node" />
 import { PendingOperation } from './PendingOperation';
 import { Resource } from './Resource';
 import { EventEmitter } from 'events';
