@@ -159,7 +159,11 @@ pool.removeAllListeners(eventName);
 
 ### Master
 
-### 1.2.0 2019-06-02
+### 2.0.0 2019-06-02
+
+- Accidentally published breaking changes in 1.2.0. Unpublished it and published again with correct version number 2.0.0 #33
+
+### 1.2.0 2019-06-02 (UNPUBLISHED)
 
 - Passing unknown options throws an error #19 #32
 - Diagnostic event handlers to allow monitoring pool behaviour #14 #23
