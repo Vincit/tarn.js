@@ -68,7 +68,7 @@ const pool = new Pool({
   // how often to check for idle resources to destroy
   reapIntervalMillis: 1000,
 
-  // long long to idle after failed create before trying again
+  // how long to idle after failed create before trying again
   createRetryIntervalMillis: 200,
 
   // If true, when a create fails, the first pending acquire is
