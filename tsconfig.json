@@ -1,12 +1,16 @@
 {
   "compilerOptions": {
     "rootDir": "./src",
-    "outDir": "./lib",
+    "outDir": "./dist",
     "strict": true,
     "esModuleInterop": true,
     "target": "es2017",
     "noImplicitAny": true,
     "declaration": true,
     "module": "commonjs"
-  }
+  },
+  "exclude": [
+    "node_modules",
+    "dist"
+  ]
 }
