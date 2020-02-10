@@ -356,20 +356,6 @@ describe('Tarn', () => {
       });
     });
 
-    it('should fail if a zero opt.createRetryIntervalMillis is given', () => {
-      expect(() => {
-        pool = new Pool({
-          create: () => {},
-          destroy() {},
-          min: 2,
-          max: 10,
-          createRetryIntervalMillis: 0
-        });
-      }).to.throwException(err => {
-        expect(err.message).to.equal('Tarn: invalid opt.createRetryIntervalMillis 0');
-      });
-    });
-
     it('should fail if unknown option passed', () => {
       expect(() => {
         pool = new Pool({
@@ -703,6 +689,107 @@ describe('Tarn', () => {
       }
     });
   });
+
+  it('should be able to return promise from opt.validate', () => {
+    let createCalled = 0;
+
+    pool = new Pool({
+      create(callback) {
+        callback(null, { a: createCalled++, n: 0 });
+      },
+      validate(resource) {
+        return Promise.delay(10).then(() => true);
+      },
+      destroy(resource) {},
+      min: 0,
+      max: 2,
+      acquireTimeoutMillis: 150
+    });
+
+    return pool.acquire().promise.then(res => {
+      pool.release(res);
+    });
+  });
+
+  it('should destroy resource if validate times out', () => {
+    let createCalled = 0;
+    let destroyCalled = 0;
+    let destroyed = null;
+    let validated = null;
+
+    pool = new Pool({
+      create(callback) {
+        callback(null, { a: createCalled++, n: 0 });
+      },
+      validate(resource) {
+        validated = resource;
+        return Promise.delay(20).then(() => true);
+      },
+      destroy(resource) {
+        destroyed = resource;
+        ++destroyCalled;
+      },
+      min: 0,
+      max: 2,
+      acquireTimeoutMillis: 10
+    });
+
+    return pool
+      .acquire()
+      .promise.catch(err => {})
+      .then(() => {
+        expect(destroyCalled).to.be(1);
+        expect(createCalled).to.be(1);
+        expect(destroyed).to.be(validated);
+      });
+  });
+
+  it('should allow to abort pending acquire even if validation is not ready', () => {
+    let createCalled = 0;
+    let destroyCalled = 0;
+    let destroyed = null;
+    let validated = null;
+
+    pool = new Pool({
+      create(callback) {
+        callback(null, { a: createCalled++, n: 0 });
+      },
+      validate(resource) {
+        validated = resource;
+        return Promise.delay(800).then(() => true);
+      },
+      destroy(resource) {
+        destroyed = resource;
+        ++destroyCalled;
+      },
+      min: 0,
+      max: 2,
+      acquireTimeoutMillis: 1500
+    });
+
+    let pending = pool.acquire();
+
+    return Promise.delay(20)
+      .then(() => {
+        pending.abort();
+        return pending.promise;
+      })
+      .catch(err => {})
+      .then(() => {
+        // TODO: validation should immediately return false?
+        expect(destroyCalled).to.be(1);
+        expect(createCalled).to.be(1);
+        expect(destroyed).to.be(validated);
+      });
+  });
+
+  it('should destroy resource if validate throws synchronus exception', () => {});
+
+  it('should destroy resource if validate returns rejected promise', () => {});
+
+  it('should fullfill all acquires even if some async validations fail', () => {});
+
+  it('should be able to destroy() everything correctly even if some pending acquires are still in validation phase', () => {});
 
   describe('release', () => {
     it('release should release a resource', () => {
@@ -1872,6 +1959,7 @@ describe('Tarn', () => {
       const numActions = 50 + randInt(400);
       const maxAcquireDelay = randInt(800);
       const maxCreateDelay = randInt(200);
+      const maxValidateDelay = randInt(200);
       const maxReleaseDelay = randInt(100);
 
       const reapIntervalMillis = 5 + randInt(95);
@@ -1911,7 +1999,8 @@ describe('Tarn', () => {
           },
 
           validate(resource) {
-            return Math.random() > validateFailProp;
+            const delay = Promise.delay(randInt(maxValidateDelay));
+            return delay.then(() => Math.random() > validateFailProp);
           },
 
           min: minResources,

@@ -2,6 +2,8 @@ import { PendingOperation } from './PendingOperation';
 import { Resource } from './Resource';
 import { checkOptionalTime, delay, duration, now, reflect, tryPromise } from './utils';
 import { EventEmitter } from 'events';
+import { AssertionError } from 'assert';
+import { clearInterval } from 'timers';
 
 export interface PoolOptions<T> {
   create: CallbackOrPromise<T>;
@@ -27,6 +29,7 @@ export class Pool<T> {
   protected pendingCreates: PendingOperation<T>[];
   protected pendingAcquires: PendingOperation<T>[];
   protected pendingDestroys: PendingOperation<T>[];
+  protected pendingValidations: PendingOperation<T>[];
   protected interval: NodeJS.Timer | null;
   protected destroyed: boolean = false;
   protected propagateCreateError: boolean;
@@ -141,12 +144,21 @@ export class Pool<T> {
     this.min = opt.min;
     this.max = opt.max;
 
+    // All the resources, which are either already acquired or which are
+    // considered for being passed to aquire in async validation phase.
     this.used = [];
+
+    // All the resources, which are either just created and free or returned
+    // back to pool after using.
     this.free = [];
 
     this.pendingCreates = [];
     this.pendingAcquires = [];
     this.pendingDestroys = [];
+
+    // When acquire is pending, but also still in validation phase
+    this.pendingValidations = [];
+
     this.destroyed = false;
     this.interval = null;
 
@@ -163,6 +175,10 @@ export class Pool<T> {
 
   numPendingAcquires() {
     return this.pendingAcquires.length;
+  }
+
+  numPendingValidations() {
+    return this.pendingValidations.length;
   }
 
   numPendingCreates() {
@@ -213,12 +229,19 @@ export class Pool<T> {
 
   isEmpty() {
     return (
-      [this.numFree(), this.numUsed(), this.numPendingAcquires(), this.numPendingCreates()].reduce(
-        (total, value) => total + value
-      ) === 0
+      [
+        this.numFree(),
+        this.numUsed(),
+        this.numPendingAcquires(),
+        this.numPendingValidations(),
+        this.numPendingCreates()
+      ].reduce((total, value) => total + value) === 0
     );
   }
 
+  /**
+   * Reaping cycle.
+   */
   check() {
     const timestamp = now();
     const newFree: Resource<T>[] = [];
@@ -257,6 +280,17 @@ export class Pool<T> {
     // First wait for all the pending creates get ready.
     return reflect(
       Promise.all(this.pendingCreates.map(create => reflect(create.promise)))
+        .then(() => {
+          // poll every 100ms and wait that all validations are ready
+          return new Promise((resolve, reject) => {
+            const interval = setInterval(() => {
+              if (this.numPendingValidations() === 0) {
+                clearInterval(interval);
+                resolve();
+              }
+            }, 100);
+          });
+        })
         .then(() => {
           // Wait for all the used resources to be freed.
           return Promise.all(this.used.map(used => reflect(used.promise)));
@@ -322,6 +356,15 @@ export class Pool<T> {
     this.emitter.removeAllListeners(event);
   }
 
+  /**
+   * The most important method that is called always when resources
+   * are created / destroyed / acquired / released. In other words
+   * every time when resources are moved from used to free or vice
+   * versa.
+   *
+   * Either assigns free resources to pendingAcquires or creates new
+   * resources if there is room for it in the pool.
+   */
   _tryAcquireOrCreate() {
     if (this.destroyed) {
       return;
@@ -339,32 +382,72 @@ export class Pool<T> {
   }
 
   _doAcquire() {
-    let didDestroyResources = false;
-
+    // Acquire as many pending acquires as possible concurrently
     while (this._canAcquire()) {
-      const pendingAcquire = this.pendingAcquires[0];
-      const free = this.free[this.free.length - 1];
+      // To allow async validation, we actually need to move free resource
+      // and pending acquire temporary from their respective arrays and depending
+      // on validation result to either leave the free resource to used resources array
+      // or destroy the free resource if validation did fail.
+      const pendingAcquire = this.pendingAcquires.shift();
+      const free = this.free.pop();
 
-      if (!this._validateResource(free.resource)) {
-        this.free.pop();
-        this._destroy(free.resource);
-        didDestroyResources = true;
-        continue;
+      if (free === undefined || pendingAcquire === undefined) {
+        const errMessage = 'this.free was empty while trying to acquire resource';
+        this.log(`Tarn: ${errMessage}`, 'warn');
+        throw new Error(`Internal error, should never happen. ${errMessage}`);
       }
 
-      this.pendingAcquires.shift();
-      this.free.pop();
-      this.used.push(free.resolve());
+      // Make sure that pendingAcquire that is being validated is not lost and
+      // can be freed when pool is destroyed.
+      this.pendingValidations.push(pendingAcquire);
 
-      //At least one active resource, start reaping
-      this._startReaping();
+      // Must be added here pre-emptively to prevent logic that decides
+      // if new resources are created will keep on working correctly.
+      this.used.push(free);
 
-      pendingAcquire.resolve(free.resource);
-    }
+      // if acquire fails also pending validation, must be aborted so that pre reserved
+      // resource will be returned to free resources immediately
+      const abortAbleValidation = new PendingOperation<boolean>(this.acquireTimeoutMillis);
+      pendingAcquire.promise.catch(err => {
+        abortAbleValidation.abort();
+      });
 
-    // If we destroyed invalid resources, we may need to create new ones.
-    if (didDestroyResources) {
-      this._tryAcquireOrCreate();
+      abortAbleValidation.promise
+        .catch(err => {
+          // There's nothing we can do here but log the error. This would otherwise
+          // leak out as an unhandled exception.
+          this.log('Tarn: resource validator threw an exception ' + err.stack, 'warn');
+          return false;
+        })
+        .then(validationSuccess => {
+          try {
+            if (validationSuccess) {
+              // At least one active resource exist, start reaping.
+              this._startReaping();
+              pendingAcquire.resolve(free.resource);
+            } else {
+              remove(this.used, free);
+              this._destroy(free.resource);
+              this.pendingAcquires.unshift(pendingAcquire);
+
+              // Since we destroyed invalid resource and were not able to fulfill
+              // all the pending acquires, we may need to create new ones or at
+              // least run this acquire loop again.
+              this._tryAcquireOrCreate();
+            }
+          } finally {
+            remove(this.pendingValidations, pendingAcquire);
+          }
+        });
+
+      // try to validate
+      this._validateResource(free.resource)
+        .then(validationSuccess => {
+          abortAbleValidation.resolve(validationSuccess);
+        })
+        .catch(err => {
+          abortAbleValidation.reject(err);
+        });
     }
   }
 
@@ -374,13 +457,10 @@ export class Pool<T> {
 
   _validateResource(resource: T) {
     try {
-      return !!this.validate(resource);
+      return Promise.resolve(this.validate(resource));
     } catch (err) {
-      // There's nothing we can do here but log the error. This would otherwise
-      // leak out as an unhandled exception.
-      this.log('Tarn: resource validator threw an exception ' + err.stack, 'warn');
-
-      return false;
+      // prevent leaking of sync exception
+      return Promise.reject(err);
     }
   }
 
