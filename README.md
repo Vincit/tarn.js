@@ -20,23 +20,23 @@ npm install tarn
 const { Pool, TimeoutError } = require('tarn');
 
 const pool = new Pool({
-  // function that creates a resource. You can either pass the resource
+  // Function that creates a resource. You can either pass the resource
   // to the callback(error, resource) or return a promise that resolves the resource
-  // (but not both).
+  // (but not both) Callback syntax will be deprecated at some point.
   create: cb => {
     cb(null, new SomeResource());
   },
 
-  // validates a connection before it is used. Return true or false
+  // Validates a connection before it is used. Return true or false
   // from it. If false is returned, the resource is destroyed and a
-  // another one is acquired.
+  // another one is acquired. Should return a Promise if validate is
+  // async function.
   validate: resource => {
     return true;
   },
 
-  // function that destroys a resource, should return promise if
-  // destroying is asynchronous operation
-  // (destroy does not support callback syntax like create)
+  // Function that destroys a resource, should return promise if
+  // destroying is asynchronous operation.
   destroy: someResource => {
     someResource.cleanup();
   },
