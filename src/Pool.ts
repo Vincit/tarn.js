@@ -2,7 +2,6 @@ import { PendingOperation } from './PendingOperation';
 import { Resource } from './Resource';
 import { checkOptionalTime, delay, duration, now, reflect, tryPromise } from './utils';
 import { EventEmitter } from 'events';
-import { AssertionError } from 'assert';
 import { clearInterval } from 'timers';
 
 export interface PoolOptions<T> {
@@ -145,7 +144,7 @@ export class Pool<T> {
     this.max = opt.max;
 
     // All the resources, which are either already acquired or which are
-    // considered for being passed to aquire in async validation phase.
+    // considered for being passed to acquire in async validation phase.
     this.used = [];
 
     // All the resources, which are either just created and free or returned
@@ -429,7 +428,7 @@ export class Pool<T> {
               remove(this.used, free);
               this._destroy(free.resource);
 
-              // is aquire was canceled, failed or timed out already
+              // is acquire was canceled, failed or timed out already
               // no need to return it to pending queries
               if (!pendingAcquire.isRejected) {
                 this.pendingAcquires.unshift(pendingAcquire);
