@@ -4,11 +4,13 @@ import { defer, Deferred } from './utils';
 export class PendingOperation<T> {
   public possibleTimeoutCause: Error | null;
   public promise: Promise<T>;
+  public isRejected: boolean;
   protected deferred: Deferred<T>;
 
   constructor(protected timeoutMillis: number) {
     this.deferred = defer<T>();
     this.possibleTimeoutCause = null;
+    this.isRejected = false;
 
     this.promise = timeout(this.deferred.promise, timeoutMillis).catch(err => {
       if (err instanceof TimeoutError) {
@@ -19,6 +21,7 @@ export class PendingOperation<T> {
         }
       }
 
+      this.isRejected = true;
       return Promise.reject(err);
     });
   }

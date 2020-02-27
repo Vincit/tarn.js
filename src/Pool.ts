@@ -428,12 +428,20 @@ export class Pool<T> {
             } else {
               remove(this.used, free);
               this._destroy(free.resource);
-              this.pendingAcquires.unshift(pendingAcquire);
 
-              // Since we destroyed invalid resource and were not able to fulfill
+              // is aquire was canceled, failed or timed out already
+              // no need to return it to pending queries
+              if (!pendingAcquire.isRejected) {
+                this.pendingAcquires.unshift(pendingAcquire);
+              }
+
+              // Since we destroyed an invalid resource and were not able to fulfill
               // all the pending acquires, we may need to create new ones or at
-              // least run this acquire loop again.
-              this._tryAcquireOrCreate();
+              // least run this acquire loop again to verify it. But not immediately
+              // to prevent starving event loop.
+              setTimeout(() => {
+                this._tryAcquireOrCreate();
+              }, 0);
             }
           } finally {
             remove(this.pendingValidations, pendingAcquire);

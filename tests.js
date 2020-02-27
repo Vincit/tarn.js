@@ -723,7 +723,7 @@ describe('Tarn', () => {
       },
       validate(resource) {
         validated = resource;
-        return Promise.delay(20).then(() => true);
+        return Promise.delay(10000).then(() => true);
       },
       destroy(resource) {
         destroyed = resource;
@@ -734,9 +734,14 @@ describe('Tarn', () => {
       acquireTimeoutMillis: 10
     });
 
+    // NOTE: it is completely ok that acquire rejects before destroy for
+    // the related resource has been called. Thats why we need to wait
+    // a moment before checking the expected results.
     return pool
       .acquire()
-      .promise.catch(err => {})
+      .promise.catch(err => {
+        return Promise.delay(1);
+      })
       .then(() => {
         expect(destroyCalled).to.be(1);
         expect(createCalled).to.be(1);
@@ -756,7 +761,7 @@ describe('Tarn', () => {
       },
       validate(resource) {
         validated = resource;
-        return Promise.delay(800).then(() => true);
+        return Promise.delay(10000).then(() => true);
       },
       destroy(resource) {
         destroyed = resource;
@@ -764,7 +769,7 @@ describe('Tarn', () => {
       },
       min: 0,
       max: 2,
-      acquireTimeoutMillis: 1500
+      acquireTimeoutMillis: 15000
     });
 
     let pending = pool.acquire();
@@ -783,13 +788,198 @@ describe('Tarn', () => {
       });
   });
 
-  it('should destroy resource if validate throws synchronus exception', () => {});
+  it('should destroy resource if validate throws synchronus exception', () => {
+    let createCalled = 0;
+    let destroyCalled = 0;
+    let numberOfFailingValidates = 5;
 
-  it('should destroy resource if validate returns rejected promise', () => {});
+    pool = new Pool({
+      create(callback) {
+        callback(null, { a: createCalled++, n: 0 });
+      },
+      validate(resource) {
+        if (numberOfFailingValidates > 0) {
+          numberOfFailingValidates--;
+          throw new Error('fail');
+        }
 
-  it('should fullfill all acquires even if some async validations fail', () => {});
+        return true;
+      },
+      destroy(resource) {
+        ++destroyCalled;
+      },
+      min: 0,
+      max: 2,
+      acquireTimeoutMillis: 100
+    });
 
-  it('should be able to destroy() everything correctly even if some pending acquires are still in validation phase', () => {});
+    return pool
+      .acquire()
+      .promise.catch(err => {})
+      .then(() => {
+        expect(destroyCalled).to.be(5);
+        expect(createCalled).to.be(6);
+      });
+  });
+
+  it('should destroy resource if validate returns rejected promise', () => {
+    let createCalled = 0;
+    let destroyCalled = 0;
+    let numberOfFailingValidates = 1;
+
+    pool = new Pool({
+      create(callback) {
+        callback(null, { a: createCalled++, n: 0 });
+      },
+      validate(resource) {
+        if (numberOfFailingValidates > 0) {
+          numberOfFailingValidates--;
+          return Promise.reject(new Error('fail'));
+        }
+
+        return true;
+      },
+      destroy(resource) {
+        ++destroyCalled;
+      },
+      min: 0,
+      max: 2,
+      acquireTimeoutMillis: 100
+    });
+
+    return pool
+      .acquire()
+      .promise.catch(err => {})
+      .then(() => {
+        expect(destroyCalled).to.be(1);
+        expect(createCalled).to.be(2);
+      });
+  });
+
+  it('should fullfill all acquires even if some async validations fails and resources are recreated', () => {
+    let createCalled = 0;
+    let destroyCalled = 0;
+    let validateCalled = 0;
+    let validationFails = 0;
+    let validationMaxFailures = 10;
+    let completedAcquires = 0;
+
+    pool = new Pool({
+      create(callback) {
+        callback(null, { a: createCalled++, n: 0 });
+      },
+      validate(resource) {
+        validateCalled++;
+        if (validationFails < validationMaxFailures && validateCalled % 3 == 0) {
+          validationFails++;
+          return Promise.delay(10).then(() => false);
+        }
+        return Promise.delay(10).then(() => true);
+      },
+      destroy(resource) {
+        ++destroyCalled;
+      },
+      min: 0,
+      max: 3,
+      acquireTimeoutMillis: 1000
+    });
+
+    return Promise.all(
+      Array.from(new Array(100)).map(() =>
+        pool.acquire().promise.then(res => {
+          completedAcquires++;
+          pool.release(res);
+        })
+      )
+    ).then(() => {
+      expect(validationFails).to.be(validationMaxFailures);
+      expect(createCalled).to.be(validationFails + 3); // failed resource + poolsize
+      expect(validateCalled).to.be(100 + validationFails); // failed resources + acquire count
+      expect(completedAcquires).to.be(100);
+      expect(destroyCalled).to.be(validationFails); // each failed validation should destroy
+    });
+  });
+
+  it('should be able to destroy() everything correctly even if some pending acquires are still in validation phase', () => {
+    let createCalled = 0;
+    let destroyCalled = 0;
+
+    pool = new Pool({
+      create(callback) {
+        callback(null, { a: createCalled++, n: 0 });
+      },
+      validate(resource) {
+        return Promise.delay(80).then(() => true);
+      },
+      destroy(resource) {
+        ++destroyCalled;
+      },
+      min: 0,
+      max: 3,
+      acquireTimeoutMillis: 2000
+    });
+
+    // create 20 acquires
+    let completedAcquires = 0;
+    let abortedAcquires = 0;
+
+    const acquires = Array.from(new Array(20)).map(() =>
+      pool
+        .acquire()
+        .promise.then(res => {
+          completedAcquires++;
+          pool.release(res);
+        })
+        .catch(err => {
+          abortedAcquires++;
+        })
+    );
+
+    // wait for one validation set to complete before destroying pool
+    return Promise.delay(100)
+      .then(() => pool.destroy())
+      .then(() => {
+        // pool should have been filled with resources and then they sould have been destroyed
+        expect(createCalled).to.be(3);
+        expect(destroyCalled).to.be(3);
+        // 6 should be completed, because validation phase is waited to
+        // acquires before aborting all the rest of the pending acquires
+        expect(completedAcquires).to.be(6);
+        expect(abortedAcquires).to.be(14);
+      });
+  });
+
+  it('should not leak all memory and acquireTimeout should still work even if validate always fails', () => {
+    let createCalled = 0;
+    let destroyCalled = 0;
+
+    pool = new Pool({
+      create(callback) {
+        callback(null, { a: createCalled++, n: 0 });
+      },
+      validate(resource) {
+        throw new Error('fail');
+      },
+      destroy(resource) {
+        ++destroyCalled;
+      },
+      min: 0,
+      max: 2,
+      acquireTimeoutMillis: 100
+    });
+
+    return pool
+      .acquire()
+      .promise.catch(err => {
+        if (err instanceof TimeoutError) {
+          return 'acquiretimeout';
+        }
+        return 'wrongerror';
+      })
+      .then(res => {
+        expect(res).to.be('acquiretimeout');
+      });
+  });
 
   describe('release', () => {
     it('release should release a resource', () => {
