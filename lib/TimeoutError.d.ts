@@ -1,2 +1,1 @@
-export declare class TimeoutError extends Error {
-}
+export declare class TimeoutError extends Error {}
