@@ -669,7 +669,10 @@ describe('Tarn', () => {
 
       return Promise.all([acquire(), acquire()])
         .then(res => {
-          expect(sortBy(res, 'a')).to.eql([{ a: 0, n: 1 }, { a: 1, n: 1 }]);
+          expect(sortBy(res, 'a')).to.eql([
+            { a: 0, n: 1 },
+            { a: 1, n: 1 }
+          ]);
 
           expect(createCalled).to.equal(2);
           expect(destroyCalled).to.equal(0);
@@ -684,7 +687,10 @@ describe('Tarn', () => {
           return Promise.all([acquire(), acquire()]);
         })
         .then(res => {
-          expect(res).to.eql([{ a: 1, n: 2 }, { a: 2, n: 1 }]);
+          expect(res).to.eql([
+            { a: 1, n: 2 },
+            { a: 2, n: 1 }
+          ]);
 
           expect(createCalled).to.equal(3);
           expect(destroyCalled).to.equal(1);
