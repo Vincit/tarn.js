@@ -28,7 +28,7 @@ export class Pool<T> {
   protected pendingAcquires: PendingOperation<T>[];
   protected pendingDestroys: PendingOperation<T>[];
   protected interval: NodeJS.Timer | null;
-  protected destroyed: boolean = false;
+  protected destroyed = false;
   protected propagateCreateError: boolean;
   protected idleTimeoutMillis: number;
   protected createRetryIntervalMillis: number;
@@ -119,7 +119,7 @@ export class Pool<T> {
       propagateCreateError: true
     };
 
-    for (let key of Object.keys(opt)) {
+    for (const key of Object.keys(opt)) {
       if (!allowedKeys[key]) {
         throw new Error(`Tarn: unsupported option opt.${key}`);
       }
@@ -520,7 +520,7 @@ export class Pool<T> {
 }
 
 function remove<T>(arr: T[], item: T) {
-  var idx = arr.indexOf(item);
+  const idx = arr.indexOf(item);
 
   if (idx === -1) {
     return false;
