@@ -4,3 +4,4 @@ testCoverage
 *.iml
 *.DS_Store
 profiling
+dist

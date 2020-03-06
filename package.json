@@ -2,14 +2,14 @@
   "name": "tarn",
   "version": "2.0.0",
   "description": "Simple and robust resource pool for node.js",
-  "main": "lib/tarn.js",
-  "types": "lib/tarn.d.ts",
+  "main": "dist/tarn.js",
+  "types": "dist/tarn.d.ts",
   "license": "MIT",
   "scripts": {
     "test": "mocha --slow 10 --timeout 5000 --reporter spec tests.js",
     "test-bail": "mocha --slow 10 --timeout 5000 --reporter spec --bail tests.js",
     "build": "tsc",
-    "clean": "rm -rf lib",
+    "clean": "rm -rf dist",
     "prepublishOnly": "tsc",
     "lint": "eslint --format codeframe \"src/**/*.ts\"",
     "format": "prettier **/*.{js,ts} --write"
@@ -34,7 +34,7 @@
   "files": [
     "README.md",
     "LICENSE",
-    "lib/*"
+    "dist/*"
   ],
   "husky": {
     "hooks": {
