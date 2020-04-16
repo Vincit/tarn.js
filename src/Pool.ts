@@ -514,10 +514,23 @@ export class Pool<T> {
     this._executeEventHandlers('createRequest', eventId);
 
     const pendingCreate = new PendingOperation<T>(this.createTimeoutMillis);
+
+    // If an error occurs (likely a create timeout) remove this creation from
+    // the list of pending creations so we try to create a new one.
+    pendingCreate.promise = pendingCreate.promise.catch(err => {
+      remove(this.pendingCreates, pendingCreate);
+      throw err;
+    });
+
     this.pendingCreates.push(pendingCreate);
 
     callbackOrPromise<T>(this.creator)
       .then(resource => {
+        if (pendingCreate.isRejected) {
+          this.destroyer(resource);
+          return null;
+        }
+
         remove(this.pendingCreates, pendingCreate);
         this.free.push(new Resource(resource));
 
@@ -527,6 +540,10 @@ export class Pool<T> {
         return null;
       })
       .catch(err => {
+        if (pendingCreate.isRejected) {
+          return null;
+        }
+
         remove(this.pendingCreates, pendingCreate);
 
         // Not returned on purpose.
