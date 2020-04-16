@@ -533,6 +533,51 @@ describe('Tarn', () => {
       });
     });
 
+    it('should retry a create if it times out', () => {
+      let createCalled = 0;
+      let destroyCalled = 0;
+
+      pool = new Pool({
+        create() {
+          ++createCalled;
+
+          if (createCalled === 1) {
+            // Wait longer than createTimeoutMillis then succeed
+            return new Promise(resolve => setTimeout(() => resolve({ a: 1 }), 200));
+          } else {
+            return Promise.resolve({ a: 2 });
+          }
+        },
+        destroy() {
+          ++destroyCalled;
+        },
+        min: 2,
+        max: 4,
+        createTimeoutMillis: 100,
+        createRetryIntervalMillis: 10
+      });
+
+      return pool
+        .acquire()
+        .promise.then(res => {
+          expect(res).to.eql({ a: 2 });
+
+          expect(createCalled).to.equal(2);
+
+          expect(pool.numUsed()).to.equal(1);
+          expect(pool.numFree()).to.equal(0);
+          expect(pool.numPendingAcquires()).to.equal(0);
+          expect(pool.numPendingCreates()).to.equal(0);
+
+          // Wait until the first resource has resolved
+          return new Promise(resolve => setTimeout(resolve, 200));
+        })
+        .then(() => {
+          // Now check first resource was destroyed
+          expect(destroyCalled).to.equal(1);
+        });
+    });
+
     it('should acquire at max opt.max resources at a time', () => {
       let createCalled = 0;
       let releasesCalled = false;

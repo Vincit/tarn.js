@@ -1,0 +1,51 @@
+version: 2.1
+
+commands:
+  test-nodejs:
+    steps:
+      - run:
+          name: Versions
+          command: npm version
+      - checkout
+      - run:
+          name: Install dependencies
+          command: npm install
+      - run:
+          name: Build
+          command: npm run build
+      - run:
+          name: Lint
+          command: npm run lint
+      - run:
+          name: Test
+          command: npm run test
+jobs:
+  node-v8:
+    docker:
+      - image: node:8
+    steps:
+      - test-nodejs
+  node-v10:
+    docker:
+      - image: node:10
+    steps:
+      - test-nodejs
+  node-v12:
+    docker:
+      - image: node:12
+    steps:
+      - test-nodejs
+  node-v13:
+    docker:
+      - image: node:13
+    steps:
+      - test-nodejs
+
+workflows:
+  version: 2
+  node-multi-build:
+    jobs:
+      - node-v8
+      - node-v10
+      - node-v12
+      - node-v13
