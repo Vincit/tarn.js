@@ -159,6 +159,13 @@ pool.removeAllListeners(eventName);
 
 ### Master
 
+### 3.0.0 2020-04-18
+
+- Async validation support, now validation resource function can return a promise #45
+- Fixed releasing abandoned resource after creation when create timeout #48
+
+Released as major version, because async validation support did require lots of internal changes, which may cause sutil difference in behavior.
+
 ### 2.0.0 2019-06-02
 
 - Accidentally published breaking changes in 1.2.0. Unpublished it and published again with correct version number 2.0.0 #33
