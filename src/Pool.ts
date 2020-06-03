@@ -282,6 +282,10 @@ export class Pool<T> {
         .then(() => {
           // poll every 100ms and wait that all validations are ready
           return new Promise((resolve, reject) => {
+            if (this.numPendingValidations() === 0) {
+              resolve();
+              return;
+            }
             const interval = setInterval(() => {
               if (this.numPendingValidations() === 0) {
                 clearInterval(interval);
