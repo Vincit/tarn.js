@@ -280,19 +280,9 @@ export class Pool<T> {
     return reflect(
       Promise.all(this.pendingCreates.map(create => reflect(create.promise)))
         .then(() => {
-          // poll every 100ms and wait that all validations are ready
-          return new Promise((resolve, reject) => {
-            if (this.numPendingValidations() === 0) {
-              resolve();
-              return;
-            }
-            const interval = setInterval(() => {
-              if (this.numPendingValidations() === 0) {
-                clearInterval(interval);
-                resolve();
-              }
-            }, 100);
-          });
+          return Promise.all(
+            this.pendingValidations.map(validation => reflect(validation.promise))
+          );
         })
         .then(() => {
           // Wait for all the used resources to be freed.

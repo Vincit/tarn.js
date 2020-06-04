@@ -1421,6 +1421,31 @@ describe('Tarn', () => {
           expect(resources[3].destroyed).to.be.ok();
         });
     });
+    it('should destroy immediately if there are no async validations', done => {
+      pool = new Pool({
+        create: () => {
+          return Promise.resolve({});
+        },
+        destroy(res) {
+          return Promise.resolve({});
+        },
+        validate(res) {
+          return true;
+        },
+        reapIntervalMillis: 10,
+        idleTimeoutMillis: 1,
+        min: 0,
+        max: 10
+      });
+      let destroyed = false;
+      setImmediate(() => {
+        expect(destroyed).to.equal(true);
+        done();
+      });
+      pool.destroy().then(() => {
+        destroyed = true;
+      });
+    });
   });
 
   describe('acquireTimeout', () => {
