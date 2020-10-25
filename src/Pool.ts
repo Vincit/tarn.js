@@ -522,7 +522,10 @@ export class Pool<T> {
     // If an error occurs (likely a create timeout) remove this creation from
     // the list of pending creations so we try to create a new one.
     pendingCreate.promise = pendingCreate.promise.catch(err => {
-      remove(this.pendingCreates, pendingCreate);
+      if (remove(this.pendingCreates, pendingCreate)) {
+        // TODO: figure out more consistent way for different error handlers in next rewrite
+        this._executeEventHandlers('createFail', eventId, err);
+      }
       throw err;
     });
 
@@ -548,11 +551,12 @@ export class Pool<T> {
           return null;
         }
 
-        remove(this.pendingCreates, pendingCreate);
+        if (remove(this.pendingCreates, pendingCreate)) {
+          this._executeEventHandlers('createFail', eventId, err);
+        }
 
         // Not returned on purpose.
         pendingCreate.reject(err);
-        this._executeEventHandlers('createFail', eventId, err);
         return null;
       });
 

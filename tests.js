@@ -2123,6 +2123,7 @@ describe('Tarn', () => {
 
       beforeEach(() => {
         listenerCallCount = 0;
+
         pool = new Pool({
           create() {
             return Promise.delay(10).then(() => Promise.resolve({ a: 0 }));
@@ -2188,6 +2189,80 @@ describe('Tarn', () => {
         await pool.destroy();
         expect(pool.emitter.eventNames()).to.have.length(0);
       });
+    });
+
+    it('TimeoutError triggers event handlers https://github.com/Vincit/tarn.js/issues/57', async () => {
+      let createDelay = 100;
+      let destroyDelay = 0;
+
+      const localPool = new Pool({
+        create() {
+          return Promise.delay(createDelay).then(() => Promise.resolve({ a: 0 }));
+        },
+        destroy(resource) {
+          return Promise.delay(destroyDelay).then(() => Promise.resolve());
+        },
+        min: 0,
+        max: 1,
+
+        createTimeoutMillis: 20,
+        acquireTimeoutMillis: 50,
+        destroyTimeoutMillis: 20,
+        reapIntervalMillis: 5,
+        idleTimeoutMillis: 10,
+        propagateCreateError: true
+      });
+
+      const failures = { createFail: 0, acquireFail: 0, destroyFail: 0 };
+
+      localPool.on('createFail', (eventId, err) => {
+        failures.createFail++;
+      });
+
+      localPool.on('acquireFail', (eventId, err) => {
+        failures.acquireFail++;
+      });
+
+      localPool.on('destroyFail', (eventId, err) => {
+        failures.destroyFail++;
+      });
+
+      try {
+        {
+          const pendingAcquire = localPool.acquire();
+          await pendingAcquire.promise.catch(err => {});
+          expect(failures.createFail).to.be(1);
+          expect(failures.acquireFail).to.be(1);
+        }
+
+        {
+          createDelay = 1;
+          const pendingAcquire1 = localPool.acquire();
+          const resource1 = await pendingAcquire1.promise.catch(err => {});
+          const pendingAcquire2 = localPool.acquire();
+          await pendingAcquire2.promise.catch(err => {});
+          expect(failures.createFail).to.be(1);
+          expect(failures.acquireFail).to.be(2);
+          expect(localPool.release(resource1)).to.be(true);
+          await Promise.delay(40);
+          expect(failures.destroyFail).to.be(0);
+        }
+
+        {
+          destroyDelay = 100;
+          const pendingAcquire = localPool.acquire();
+          const resource1 = await pendingAcquire.promise.catch(err => {});
+          expect(localPool.release(resource1)).to.be(true);
+          await Promise.delay(50); // idling resources should get destroyed
+
+          expect(failures.createFail).to.be(1);
+          expect(failures.acquireFail).to.be(2);
+          expect(failures.destroyFail).to.be(1);
+          destroyDelay = 1;
+        }
+      } finally {
+        await localPool.destroy();
+      }
     });
   });
 
