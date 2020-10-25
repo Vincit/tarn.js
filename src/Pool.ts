@@ -280,8 +280,9 @@ export class Pool<T> {
     return reflect(
       Promise.all(this.pendingCreates.map(create => reflect(create.promise)))
         .then(() => {
-          // poll every 100ms and wait that all validations are ready
+          // eslint-disable-next-line
           return new Promise((resolve, reject) => {
+            // poll every 100ms and wait that all validations are ready
             if (this.numPendingValidations() === 0) {
               resolve();
               return;
@@ -411,6 +412,8 @@ export class Pool<T> {
       // if acquire fails also pending validation, must be aborted so that pre reserved
       // resource will be returned to free resources immediately
       const abortAbleValidation = new PendingOperation<boolean>(this.acquireTimeoutMillis);
+
+      // eslint-disable-next-line
       pendingAcquire.promise.catch(err => {
         abortAbleValidation.abort();
       });

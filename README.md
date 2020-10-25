@@ -159,6 +159,10 @@ pool.removeAllListeners(eventName);
 
 ### Master
 
+### 3.0.1 2020-10-25
+
+- Added triggering missing createFail event on timeout error - fixes #57
+
 ### 3.0.0 2020-04-18
 
 - Async validation support, now validation resource function can return a promise #45
