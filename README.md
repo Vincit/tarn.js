@@ -28,15 +28,15 @@ const pool = new Pool({
   },
 
   // Validates a connection before it is used. Return true or false
-  // from it. If false is returned, the resource is destroyed and a
+  // from it. If false is returned, the resource is destroyed and
   // another one is acquired. Should return a Promise if validate is
-  // async function.
+  // an async function.
   validate: resource => {
     return true;
   },
 
-  // Function that destroys a resource, should return promise if
-  // destroying is asynchronous operation.
+  // Function that destroys a resource, should return a promise if
+  // destroying is an asynchronous operation.
   destroy: someResource => {
     someResource.cleanup();
   },
@@ -83,11 +83,11 @@ const pool = new Pool({
 const acquire = pool.acquire();
 
 // acquire can be aborted using the abort method.
-// If acquire had triggered creating new resource to the pool
+// If acquire had triggered creating a new resource in the pool
 // creation will continue and it is not aborted.
 acquire.abort();
 
-// the acquire object has a promise property that gets reolved with
+// the acquire object has a promise property that gets resolved with
 // the acquired resource
 try {
   const resource = await acquire.promise;
@@ -117,9 +117,9 @@ pool.numPendingCreates();
 // pool cannot be used after this.
 await pool.destroy();
 
-// The following examples add synchronous event handlers for example to
-// allow externally collect diagnostic data of pool behaviour.
-// If any of these hooks fail, all errors are catched and warnings are logged.
+// The following examples add synchronous event handlers. For example, to
+// allow externally collecting pool behaviour diagnostic data.
+// If any of these hooks fail, all errors are caught and warnings are logged.
 
 // resource is acquired from pool
 pool.on('acquireRequest', eventId => {});
@@ -168,7 +168,7 @@ pool.removeAllListeners(eventName);
 - Async validation support, now validation resource function can return a promise #45
 - Fixed releasing abandoned resource after creation when create timeout #48
 
-Released as major version, because async validation support did require lots of internal changes, which may cause sutil difference in behavior.
+Released as major version, because async validation support did require lots of internal changes, which may cause subtle difference in behavior.
 
 ### 2.0.0 2019-06-02
 
