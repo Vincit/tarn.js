@@ -1,9 +1,18 @@
 'use strict';
 
-const Promise = require('bluebird');
+const { promisify } = require('util');
+const expect = require('expect.js');
 const Pool = require('./').Pool;
 const TimeoutError = require('./').TimeoutError;
-const expect = require('expect.js');
+const Bluebird = require('bluebird');
+
+const setTimeoutAsync = promisify(setTimeout);
+const delay = delayTime => {
+  return async (...args) => {
+    await setTimeoutAsync(delayTime);
+    return Promise.resolve(...args);
+  };
+};
 
 describe('Tarn', () => {
   let pool = null;
@@ -422,7 +431,7 @@ describe('Tarn', () => {
 
       pool = new Pool({
         create() {
-          return Promise.resolve({ a: createCalled++ }).delay(50);
+          return Promise.resolve({ a: createCalled++ }).then(delay(50));
         },
         destroy() {
           ++destroyCalled;
@@ -664,7 +673,7 @@ describe('Tarn', () => {
           expect(pool.numPendingAcquires()).to.equal(0);
           expect(pool.numPendingCreates()).to.equal(1);
 
-          return Promise.delay(100).then(() => {
+          return delay(100)().then(() => {
             expect(createCalled).to.equal(1);
             expect(destroyCalled).to.equal(0);
 
@@ -749,7 +758,7 @@ describe('Tarn', () => {
         callback(null, { a: createCalled++, n: 0 });
       },
       validate(resource) {
-        return Promise.delay(10).then(() => true);
+        return delay(10)().then(() => true);
       },
       destroy(resource) {},
       min: 0,
@@ -774,7 +783,9 @@ describe('Tarn', () => {
       },
       validate(resource) {
         validated = resource;
-        return Promise.delay(10000).then(() => true);
+        return delay(10000)().then(() => {
+          return true;
+        });
       },
       destroy(resource) {
         destroyed = resource;
@@ -790,9 +801,7 @@ describe('Tarn', () => {
     // a moment before checking the expected results.
     return pool
       .acquire()
-      .promise.catch(err => {
-        return Promise.delay(1);
-      })
+      .promise.catch(delay(1))
       .then(() => {
         expect(destroyCalled).to.be(1);
         expect(createCalled).to.be(1);
@@ -812,7 +821,7 @@ describe('Tarn', () => {
       },
       validate(resource) {
         validated = resource;
-        return Promise.delay(10000).then(() => true);
+        return delay(10000)().then(() => true);
       },
       destroy(resource) {
         destroyed = resource;
@@ -825,7 +834,7 @@ describe('Tarn', () => {
 
     let pending = pool.acquire();
 
-    return Promise.delay(20)
+    return delay(20)()
       .then(() => {
         pending.abort();
         return pending.promise;
@@ -839,7 +848,7 @@ describe('Tarn', () => {
       });
   });
 
-  it('should destroy resource if validate throws synchronus exception', () => {
+  it('should destroy resource if validate throws synchronous exception', () => {
     let createCalled = 0;
     let destroyCalled = 0;
     let numberOfFailingValidates = 5;
@@ -923,9 +932,9 @@ describe('Tarn', () => {
         validateCalled++;
         if (validationFails < validationMaxFailures && validateCalled % 3 == 0) {
           validationFails++;
-          return Promise.delay(10).then(() => false);
+          return delay(10)().then(() => false);
         }
-        return Promise.delay(10).then(() => true);
+        return delay(10)().then(() => true);
       },
       destroy(resource) {
         ++destroyCalled;
@@ -960,7 +969,7 @@ describe('Tarn', () => {
         callback(null, { a: createCalled++, n: 0 });
       },
       validate(resource) {
-        return Promise.delay(80).then(() => true);
+        return delay(80)().then(() => true);
       },
       destroy(resource) {
         ++destroyCalled;
@@ -987,7 +996,7 @@ describe('Tarn', () => {
     );
 
     // wait for one validation set to complete before destroying pool
-    return Promise.delay(100)
+    return delay(100)()
       .then(() => pool.destroy())
       .then(() => {
         // pool should have been filled with resources and then they sould have been destroyed
@@ -1172,7 +1181,7 @@ describe('Tarn', () => {
       pool = new Pool({
         create: () => {
           ++createCalled;
-          return Promise.delay(50).return({});
+          return delay(50)().then(() => {});
         },
         destroy() {
           ++destroyCalled;
@@ -1230,11 +1239,11 @@ describe('Tarn', () => {
       pool = new Pool({
         create: () => {
           ++createCalled;
-          return Promise.delay(50).return({});
+          return delay(50)().then(() => {});
         },
         destroy() {
           ++destroyCalled;
-          return Promise.delay(200);
+          return delay(200)();
         },
         min: 0,
         max: 10
@@ -1385,7 +1394,7 @@ describe('Tarn', () => {
         },
         destroy(res) {
           destroyDelay -= 50;
-          return Promise.delay(destroyDelay).then(() => {
+          return delay(destroyDelay)().then(() => {
             res.destroyed = true;
           });
         },
@@ -1408,7 +1417,7 @@ describe('Tarn', () => {
           pool.release(resources[3]);
 
           // reaping should have started destroying these resources already
-          return Promise.delay(30).then(() => resources);
+          return delay(30)().then(() => resources);
         })
         .then(resources => {
           // pool destroy should wait that all destroys are completed
@@ -1587,7 +1596,7 @@ describe('Tarn', () => {
 
       let now = Date.now();
 
-      Promise.resolve(pool.acquire().promise)
+      Bluebird.resolve(pool.acquire().promise)
         .reflect()
         .then(res1 => {
           return Promise.resolve(pool.acquire().promise)
@@ -1657,14 +1666,14 @@ describe('Tarn', () => {
           expect(pool.numUsed()).to.equal(1);
           expect(pool.numFree()).to.equal(2);
 
-          return Promise.delay(50);
+          return delay(50)();
         })
         .then(() => {
           expect(destroyCalled).to.equal(0);
           expect(pool.numUsed()).to.equal(1);
           expect(pool.numFree()).to.equal(2);
 
-          return Promise.delay(65);
+          return delay(65)();
         })
         .then(() => {
           expect(destroyed).to.eql([{ a: 0 }, { a: 1 }]);
@@ -1708,11 +1717,11 @@ describe('Tarn', () => {
         .promise.then(res => {
           expect(pool.interval).to.not.equal(null);
           pool.release(res);
-          return Promise.delay(50);
+          return delay(50)();
         })
         .then(() => {
           expect(pool.interval).to.not.equal(null);
-          return Promise.delay(65);
+          return delay(65)();
         })
         .then(() => {
           expect(pool.interval).to.equal(null);
@@ -1773,14 +1782,14 @@ describe('Tarn', () => {
           expect(pool.numUsed()).to.equal(1);
           expect(pool.numFree()).to.equal(3);
 
-          return Promise.delay(50);
+          return delay(50)();
         })
         .then(() => {
           expect(destroyCalled).to.equal(0);
           expect(pool.numUsed()).to.equal(1);
           expect(pool.numFree()).to.equal(3);
 
-          return Promise.delay(60);
+          return delay(60)();
         })
         .then(() => {
           expect(sortBy(destroyed, 'a')).to.eql([{ a: 0 }, { a: 1 }]);
@@ -1838,14 +1847,14 @@ describe('Tarn', () => {
             if (finished) return;
             pool.release(res);
 
-            return Promise.delay(rand())
+            return delay(rand())()
               .then(() => {
                 if (finished) return;
                 return pool.acquire().promise;
               })
               .then(res => {
                 if (finished) return;
-                return Promise.delay(rand()).then(() => {
+                return delay(rand())().then(() => {
                   return releaseAndAcquireThread(res);
                 });
               });
@@ -1855,7 +1864,7 @@ describe('Tarn', () => {
             return Math.round(1 + Math.random() * 4);
           }
 
-          return Promise.delay(200);
+          return delay(200)();
         })
         .then(() => {
           finished = true;
@@ -1882,18 +1891,18 @@ describe('Tarn', () => {
         // third create should fail
         create() {
           if (createCalled > 1) {
-            return Promise.delay(10).then(() => Promise.reject(new Error('fail')));
+            return delay(10)().then(() => Promise.reject(new Error('fail')));
           }
-          return Promise.delay(10).then(() => Promise.resolve({ a: ++createCalled }));
+          return delay(10)().then(() => Promise.resolve({ a: ++createCalled }));
         },
 
         // second destory should fail
         destroy(resource) {
           if (destroyCalled > 0) {
-            return Promise.delay(10).then(() => Promise.reject(new Error('fail')));
+            return delay(10)().then(() => Promise.reject(new Error('fail')));
           }
           ++destroyCalled;
-          return Promise.delay(10).then(() => Promise.resolve());
+          return delay(10)().then(() => Promise.resolve());
         },
         min: 0,
         max: 3,
@@ -2126,10 +2135,10 @@ describe('Tarn', () => {
 
         pool = new Pool({
           create() {
-            return Promise.delay(10).then(() => Promise.resolve({ a: 0 }));
+            return delay(10)().then(() => Promise.resolve({ a: 0 }));
           },
           destroy(resource) {
-            return Promise.delay(10).then(() => Promise.resolve());
+            return delay(10)().then(() => Promise.resolve());
           },
           min: 0,
           max: 3,
@@ -2295,14 +2304,14 @@ describe('Tarn', () => {
 
         pool = new Pool({
           create() {
-            const delay = Promise.delay(randInt(maxCreateDelay));
+            const delayPromise = delay(randInt(maxCreateDelay))();
 
             if (Math.random() < createFailProp) {
-              return delay.then(() => Promise.reject(new Error('create error')));
+              return delayPromise.then(() => Promise.reject(new Error('create error')));
             } else {
               const resource = { id: ++id };
               createdResources.push(resource);
-              return delay.then(() => resource);
+              return delayPromise.then(() => resource);
             }
           },
 
@@ -2315,8 +2324,8 @@ describe('Tarn', () => {
           },
 
           validate(resource) {
-            const delay = Promise.delay(randInt(maxValidateDelay));
-            return delay.then(() => Math.random() > validateFailProp);
+            const delayPromise = delay(randInt(maxValidateDelay))();
+            return delayPromise.then(() => Math.random() > validateFailProp);
           },
 
           min: minResources,
@@ -2329,14 +2338,14 @@ describe('Tarn', () => {
 
         for (let i = 0; i < numActions; ++i) {
           actions.push(() => {
-            return Promise.delay(randInt(maxAcquireDelay))
+            return delay(randInt(maxAcquireDelay))()
               .then(() => pool.acquire().promise)
               .then(resource => {
                 expect(usedResources.includes(resource)).to.equal(false);
                 expect(pool.numUsed() + pool.numFree()).to.be.lessThan(maxResources + 1);
 
                 usedResources.push(resource);
-                return Promise.delay(randInt(maxReleaseDelay)).return(resource);
+                return delay(randInt(maxReleaseDelay))().then(() => resource);
               })
               .then(resource => {
                 usedResources.splice(usedResources.indexOf(resource), 1);
@@ -2345,7 +2354,8 @@ describe('Tarn', () => {
           });
         }
 
-        return Promise.map(actions, action => action())
+        const promises = actions.map(action => action());
+        return Promise.all(promises)
           .then(() => {
             expect(pool.numUsed()).to.equal(0);
             expect(pool.numFree()).to.be.lessThan(maxResources + 1);
