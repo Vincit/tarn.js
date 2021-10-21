@@ -433,7 +433,10 @@ export class Pool<T> {
               pendingAcquire.resolve(free.resource);
             } else {
               remove(this.used, free);
-              this._destroy(free.resource);
+              // Only destroy the resource if the validation has failed
+              if (!validationSuccess) {
+                this._destroy(free.resource);
+              }
 
               // is acquire was canceled, failed or timed out already
               // no need to return it to pending queries
