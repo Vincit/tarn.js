@@ -427,7 +427,7 @@ export class Pool<T> {
         })
         .then(validationSuccess => {
           try {
-            if (validationSuccess) {
+            if (validationSuccess && !pendingAcquire.isRejected) {
               // At least one active resource exist, start reaping.
               this._startReaping();
               pendingAcquire.resolve(free.resource);
