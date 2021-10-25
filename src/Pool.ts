@@ -436,6 +436,16 @@ export class Pool<T> {
               // Only destroy the resource if the validation has failed
               if (!validationSuccess) {
                 this._destroy(free.resource);
+
+                // Since we destroyed an invalid resource and were not able to fulfill
+                // all the pending acquires, we may need to create new ones or at
+                // least run this acquire loop again to verify it. But not immediately
+                // to prevent starving event loop.
+                setTimeout(() => {
+                  this._tryAcquireOrCreate();
+                }, 0);
+              } else {
+                this.free.push(free);
               }
 
               // is acquire was canceled, failed or timed out already
@@ -443,14 +453,6 @@ export class Pool<T> {
               if (!pendingAcquire.isRejected) {
                 this.pendingAcquires.unshift(pendingAcquire);
               }
-
-              // Since we destroyed an invalid resource and were not able to fulfill
-              // all the pending acquires, we may need to create new ones or at
-              // least run this acquire loop again to verify it. But not immediately
-              // to prevent starving event loop.
-              setTimeout(() => {
-                this._tryAcquireOrCreate();
-              }, 0);
             }
           } finally {
             remove(this.pendingValidations, pendingAcquire);
