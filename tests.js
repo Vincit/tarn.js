@@ -741,6 +741,40 @@ describe('Tarn', () => {
     });
   });
 
+  it('should release resource back to pool if validation succeeded but acquire was rejected', () => {
+    let createCalled = 0;
+    let pendingAcquire;
+
+    pool = new Pool({
+      create(callback) {
+        callback(null, { a: createCalled++, n: 0 });
+      },
+      validate(resource) {
+        return Promise.delay(20).then(() => {
+          // immediately abort the acquire so that the `isRejected` property is `true`
+          // but none of the handlers have the chance to fire
+          pendingAcquire.abort();
+          return true;
+        });
+      },
+      destroy(resource) {},
+      min: 0,
+      max: 2,
+      acquireTimeoutMillis: 150
+    });
+
+    pendingAcquire = pool.acquire();
+    // When the acquire is aborted we know the validation has finished so we can make our assertions
+    return pendingAcquire.promise
+      .catch(() => {})
+      .then(() => {
+        // a resource should have been created and it should have been added to the free pool
+        expect(createCalled).to.be(1);
+        expect(pool.numUsed()).to.be(0);
+        expect(pool.numFree()).to.be(1);
+      });
+  });
+
   it('should be able to return promise from opt.validate', () => {
     let createCalled = 0;
 
