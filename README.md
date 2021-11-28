@@ -159,6 +159,10 @@ pool.removeAllListeners(eventName);
 
 ### Master
 
+### 3.0.2 2021-11-29
+
+- Valid resources with rejected acquires are returned to the pool #68
+
 ### 3.0.1 2020-10-25
 
 - Added triggering missing createFail event on timeout error - fixes #57

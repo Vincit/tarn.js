@@ -1,6 +1,6 @@
 {
   "name": "tarn",
-  "version": "3.0.1",
+  "version": "3.0.2",
   "description": "Simple and robust resource pool for node.js",
   "main": "dist/tarn.js",
   "types": "dist/tarn.d.ts",
