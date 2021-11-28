@@ -427,27 +427,32 @@ export class Pool<T> {
         })
         .then(validationSuccess => {
           try {
-            if (validationSuccess) {
+            if (validationSuccess && !pendingAcquire.isRejected) {
               // At least one active resource exist, start reaping.
               this._startReaping();
               pendingAcquire.resolve(free.resource);
             } else {
               remove(this.used, free);
-              this._destroy(free.resource);
+              // Only destroy the resource if the validation has failed
+              if (!validationSuccess) {
+                this._destroy(free.resource);
+
+                // Since we destroyed an invalid resource and were not able to fulfill
+                // all the pending acquires, we may need to create new ones or at
+                // least run this acquire loop again to verify it. But not immediately
+                // to prevent starving event loop.
+                setTimeout(() => {
+                  this._tryAcquireOrCreate();
+                }, 0);
+              } else {
+                this.free.push(free);
+              }
 
               // is acquire was canceled, failed or timed out already
               // no need to return it to pending queries
               if (!pendingAcquire.isRejected) {
                 this.pendingAcquires.unshift(pendingAcquire);
               }
-
-              // Since we destroyed an invalid resource and were not able to fulfill
-              // all the pending acquires, we may need to create new ones or at
-              // least run this acquire loop again to verify it. But not immediately
-              // to prevent starving event loop.
-              setTimeout(() => {
-                this._tryAcquireOrCreate();
-              }, 0);
             }
           } finally {
             remove(this.pendingValidations, pendingAcquire);
