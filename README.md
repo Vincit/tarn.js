@@ -62,7 +62,7 @@ const pool = new Pool({
   // new resources will be created after this timeout
   destroyTimeoutMillis: 5000,
 
-  // free resouces are destroyed after this many milliseconds
+  // free resources are destroyed after this many milliseconds
   idleTimeoutMillis: 30000,
 
   // how often to check for idle resources to destroy
