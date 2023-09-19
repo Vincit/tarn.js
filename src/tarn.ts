@@ -1,7 +1,7 @@
-import { Pool } from './Pool';
+import { Pool, PoolOptions } from './Pool';
 import { TimeoutError } from './TimeoutError';
 
-export { Pool, TimeoutError };
+export { Pool, PoolOptions, TimeoutError };
 
 module.exports = {
   Pool,
