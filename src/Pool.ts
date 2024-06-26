@@ -193,7 +193,13 @@ export class Pool<T> {
   }
 
   numRemainingCapacity() {
-    return this.numMax() - (this.numUsed() + this.numPendingCreates());
+    const demand = (
+      this.numUsed() +
+      this.numPendingCreates() +
+      this.numPendingValidations() +
+      this.numPendingAcquires()
+    );
+    return Math.max(0, this.numMax() - demand);
   }
 
   acquire() {
