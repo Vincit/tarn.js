@@ -100,6 +100,12 @@ try {
   }
 }
 
+// returns the maximum number of resources allowed by the pool. This can be configured when the pool is created.
+pool.numMax();
+
+// returns the minimum number of resources allowed by the pool. This can be configured when the pool is created.
+pool.numMin();
+
 // releases the resource.
 pool.release(resource);
 
@@ -114,6 +120,9 @@ pool.numPendingAcquires();
 
 // how many asynchronous create calls are running
 pool.numPendingCreates();
+
+// the number of additional resources which can be created before the maximum is reached. This already deducts the number of resources that are currently being created.
+pool.numRemainingCapacity();
 
 // waits for all resources to be returned to the pool and destroys them.
 // pool cannot be used after this.
