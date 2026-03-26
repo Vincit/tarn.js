@@ -1,9 +1,10 @@
 import { Pool } from './Pool';
-import { TimeoutError } from './TimeoutError';
+import * as errors from './errors';
 
-export { Pool, TimeoutError };
+export { Pool };
+export * from './errors';
 
 module.exports = {
   Pool,
-  TimeoutError
+  ...errors
 };

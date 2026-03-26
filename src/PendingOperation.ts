@@ -1,4 +1,4 @@
-import { TimeoutError } from './TimeoutError';
+import { PendingOperationError, TimeoutError } from './errors';
 import { defer, Deferred } from './utils';
 
 export class PendingOperation<T> {
@@ -27,7 +27,7 @@ export class PendingOperation<T> {
   }
 
   abort() {
-    this.reject(new Error('aborted'));
+    this.reject(new PendingOperationError('aborted'));
   }
 
   reject(err: Error) {
