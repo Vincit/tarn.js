@@ -591,7 +591,7 @@ describe('Tarn', () => {
       });
     });
 
-    it('should abort an acquire if abort() is called for the return value from the `acquire` method', async () => {
+    it('should abort an acquire if abort() is called for the return value from the `acquire` method', () => {
       let createCalled = 0;
       let destroyCalled = 0;
 
@@ -617,28 +617,29 @@ describe('Tarn', () => {
         acquire.abort();
       }, 10);
 
-      try {
-        await acquire.promise;
-        throw new Error('should not get here');
-      } catch (err) {
-        expect(err.message).toBe('aborted');
+      return acquire.promise
+        .then(() => {
+          throw new Error('should not get here');
+        })
+        .catch(err => {
+          expect(err.message).toBe('aborted');
 
-        expect(createCalled).toBe(1);
+          expect(createCalled).toBe(1);
 
-        expect(pool.numUsed()).toBe(0);
-        expect(pool.numFree()).toBe(0);
-        expect(pool.numPendingAcquires()).toBe(0);
-        expect(pool.numPendingCreates()).toBe(1);
+          expect(pool.numUsed()).toBe(0);
+          expect(pool.numFree()).toBe(0);
+          expect(pool.numPendingAcquires()).toBe(0);
+          expect(pool.numPendingCreates()).toBe(1);
 
-        await Promise.delay(100);
+          return Promise.delay(100).then(() => {
+            expect(createCalled).toBe(1);
+            expect(destroyCalled).toBe(0);
 
-        expect(createCalled).toBe(1);
-        expect(destroyCalled).toBe(0);
-
-        expect(pool.numUsed()).toBe(0);
-        expect(pool.numFree()).toBe(1);
-        expect(pool.numPendingAcquires()).toBe(0);
-      }
+            expect(pool.numUsed()).toBe(0);
+            expect(pool.numFree()).toBe(1);
+            expect(pool.numPendingAcquires()).toBe(0);
+          });
+        });
     });
 
     it('should validate resources using opt.validate before acquiring', () => {
@@ -1422,7 +1423,7 @@ describe('Tarn', () => {
   });
 
   describe('acquireTimeout', () => {
-    it('should fail to acquire opt.max + 1 resources after acquireTimeoutMillis', async () => {
+    it('should fail to acquire opt.max + 1 resources after acquireTimeoutMillis', () => {
       let createCalled = 0;
       let acquireTimeoutMillis = 100;
 
@@ -1442,33 +1443,34 @@ describe('Tarn', () => {
 
       let now = Date.now();
 
-      try {
-        await Promise.all([
-          pool.acquire().promise,
-          pool.acquire().promise,
-          pool.acquire().promise,
-          pool.acquire().promise,
-          pool.acquire().promise,
-          pool.acquire().promise
-        ]);
-        throw new Error('should not get here');
-      } catch (err) {
-        let duration = Date.now() - now;
+      return Promise.all([
+        pool.acquire().promise,
+        pool.acquire().promise,
+        pool.acquire().promise,
+        pool.acquire().promise,
+        pool.acquire().promise,
+        pool.acquire().promise
+      ])
+        .then(() => {
+          throw new Error('should not get here');
+        })
+        .catch(err => {
+          let duration = Date.now() - now;
 
-        expect(err).toBeInstanceOf(TimeoutError);
+          expect(err).toBeInstanceOf(TimeoutError);
 
-        expect(duration).toBeGreaterThan(acquireTimeoutMillis - 5);
-        expect(duration - acquireTimeoutMillis).toBeLessThan(50);
+          expect(duration).toBeGreaterThan(acquireTimeoutMillis - 5);
+          expect(duration - acquireTimeoutMillis).toBeLessThan(50);
 
-        expect(createCalled).toBe(5);
-        expect(pool.numUsed()).toBe(5);
-        expect(pool.numFree()).toBe(0);
-        expect(pool.numPendingAcquires()).toBe(0);
-        expect(pool.numPendingCreates()).toBe(0);
-      }
+          expect(createCalled).toBe(5);
+          expect(pool.numUsed()).toBe(5);
+          expect(pool.numFree()).toBe(0);
+          expect(pool.numPendingAcquires()).toBe(0);
+          expect(pool.numPendingCreates()).toBe(0);
+        });
     });
 
-    it('should recover after acquireTimeoutMillis if the create function returns an error', async () => {
+    it('should recover after acquireTimeoutMillis if the create function returns an error', () => {
       let createCalled = 0;
       let acquireTimeoutMillis = 100;
 
@@ -1489,27 +1491,29 @@ describe('Tarn', () => {
 
       let now = Date.now();
 
-      try {
-        await pool.acquire().promise;
-        throw new Error('should not get here');
-      } catch (err) {
-        let duration = Date.now() - now;
+      return pool
+        .acquire()
+        .promise.then(() => {
+          throw new Error('should not get here');
+        })
+        .catch(err => {
+          let duration = Date.now() - now;
 
-        expect(err).toBeInstanceOf(TimeoutError);
-        expect(err.message).toBe('this is the error from create');
+          expect(err).toBeInstanceOf(TimeoutError);
+          expect(err.message).toBe('this is the error from create');
 
-        expect(duration).toBeGreaterThan(acquireTimeoutMillis - 5);
-        expect(duration - acquireTimeoutMillis).toBeLessThan(50);
+          expect(duration).toBeGreaterThan(acquireTimeoutMillis - 5);
+          expect(duration - acquireTimeoutMillis).toBeLessThan(50);
 
-        expect(createCalled).toBe(1);
-        expect(pool.numUsed()).toBe(0);
-        expect(pool.numFree()).toBe(0);
-        expect(pool.numPendingAcquires()).toBe(0);
-        expect(pool.numPendingCreates()).toBe(0);
-      }
+          expect(createCalled).toBe(1);
+          expect(pool.numUsed()).toBe(0);
+          expect(pool.numFree()).toBe(0);
+          expect(pool.numPendingAcquires()).toBe(0);
+          expect(pool.numPendingCreates()).toBe(0);
+        });
     });
 
-    it('should recover after acquireTimeoutMillis if the create function throws an error', async () => {
+    it('should recover after acquireTimeoutMillis if the create function throws an error', () => {
       let createCalled = 0;
       let acquireTimeoutMillis = 100;
 
@@ -1526,24 +1530,26 @@ describe('Tarn', () => {
 
       let now = Date.now();
 
-      try {
-        await pool.acquire().promise;
-        throw new Error('should not get here');
-      } catch (err) {
-        let duration = Date.now() - now;
+      return pool
+        .acquire()
+        .promise.then(() => {
+          throw new Error('should not get here');
+        })
+        .catch(err => {
+          let duration = Date.now() - now;
 
-        expect(err).toBeInstanceOf(TimeoutError);
-        expect(err.message).toBe('this is the error from create');
+          expect(err).toBeInstanceOf(TimeoutError);
+          expect(err.message).toBe('this is the error from create');
 
-        expect(duration).toBeGreaterThan(acquireTimeoutMillis - 5);
-        expect(duration - acquireTimeoutMillis).toBeLessThan(50);
+          expect(duration).toBeGreaterThan(acquireTimeoutMillis - 5);
+          expect(duration - acquireTimeoutMillis).toBeLessThan(50);
 
-        expect(createCalled).toBe(1);
-        expect(pool.numUsed()).toBe(0);
-        expect(pool.numFree()).toBe(0);
-        expect(pool.numPendingAcquires()).toBe(0);
-        expect(pool.numPendingCreates()).toBe(0);
-      }
+          expect(createCalled).toBe(1);
+          expect(pool.numUsed()).toBe(0);
+          expect(pool.numFree()).toBe(0);
+          expect(pool.numPendingAcquires()).toBe(0);
+          expect(pool.numPendingCreates()).toBe(0);
+        });
     });
   });
 
