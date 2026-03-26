@@ -22,22 +22,17 @@ commands:
 jobs:
   node-v8:
     docker:
-      - image: node:8
+      - image: node:20
     steps:
       - test-nodejs
-  node-v10:
+  node-v22:
     docker:
-      - image: node:10
+      - image: node:22
     steps:
       - test-nodejs
-  node-v12:
+  node-v24:
     docker:
-      - image: node:12
-    steps:
-      - test-nodejs
-  node-v13:
-    docker:
-      - image: node:13
+      - image: node:24
     steps:
       - test-nodejs
 
@@ -45,7 +40,6 @@ workflows:
   version: 2
   node-multi-build:
     jobs:
-      - node-v8
-      - node-v10
-      - node-v12
-      - node-v13
+      - node-v20
+      - node-v22
+      - node-v24

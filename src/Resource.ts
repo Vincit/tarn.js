@@ -18,4 +18,8 @@ export class Resource<T> {
     this.deferred.resolve(undefined);
     return new Resource(this.resource);
   }
+
+  settle() {
+    this.deferred.resolve(undefined);
+  }
 }

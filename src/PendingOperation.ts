@@ -21,6 +21,9 @@ export class PendingOperation<T> {
         }
       }
 
+      // Settle the deferred to prevent leaking the timeout wrapper's internal handlers.
+      // The wrapper promise is already rejected so this only settles the inner chain.
+      this.deferred.reject(err);
       this.isRejected = true;
       return Promise.reject(err);
     });

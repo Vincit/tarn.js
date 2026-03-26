@@ -5,3 +5,4 @@ testCoverage
 *.DS_Store
 profiling
 dist
+yarn.lock
