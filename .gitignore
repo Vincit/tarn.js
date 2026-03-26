@@ -6,3 +6,4 @@ testCoverage
 profiling
 dist
 yarn.lock
+package-lock.json

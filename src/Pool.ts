@@ -30,7 +30,7 @@ export class Pool<T> {
   protected pendingDestroys: PendingOperation<T>[];
   protected pendingValidations: PendingOperation<T>[];
   protected pendingRetryTimers: ReturnType<typeof setTimeout>[];
-  protected interval: NodeJS.Timer | null;
+  protected interval: ReturnType<typeof setInterval> | null;
   protected destroyed = false;
   protected propagateCreateError: boolean;
   protected idleTimeoutMillis: number;
@@ -653,7 +653,10 @@ export class Pool<T> {
       } catch (err) {
         // There's nothing we can do here but log the error. This would otherwise
         // leak out as an unhandled exception.
-        this.log(`Tarn: event handler "${eventName}" threw an exception ${err.stack}`, 'warn');
+        this.log(
+          `Tarn: event handler "${eventName}" threw an exception ${(err as Error).stack}`,
+          'warn'
+        );
       }
     });
   }

@@ -8,7 +8,8 @@
     "noImplicitAny": true,
     "declaration": true,
     "module": "commonjs",
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "types": ["node"]
   },
   "include": [
     "src"
