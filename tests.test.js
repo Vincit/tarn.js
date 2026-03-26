@@ -2222,8 +2222,8 @@ describe('Tarn', () => {
     });
   });
 
-  describe.skip('randomized tests', () => {
-    const NUM_RANDOM_TESTS = 0;
+  describe('randomized tests', () => {
+    const NUM_RANDOM_TESTS = 1;
 
     for (let rndIdx = 1; rndIdx < NUM_RANDOM_TESTS + 1; ++rndIdx) {
       const maxResources = 10 + randInt(90);
@@ -2241,81 +2241,78 @@ describe('Tarn', () => {
       const destroyFailProp = Math.random() * 0.7;
       const validateFailProp = Math.random() * 0.5;
 
-      it(
-        `random ${rndIdx}`,
-        () => {
-          let id = 0;
+      const cfg = { timeout: 1000000 };
+      it(`random ${rndIdx}`, cfg, () => {
+        let id = 0;
 
-          const usedResources = [];
-          const createdResources = [];
-          const destroyedResources = [];
+        const usedResources = [];
+        const createdResources = [];
+        const destroyedResources = [];
 
-          pool = new Pool({
-            create() {
-              const d = Promise.delay(randInt(maxCreateDelay));
+        pool = new Pool({
+          create() {
+            const d = Promise.delay(randInt(maxCreateDelay));
 
-              if (Math.random() < createFailProp) {
-                return d.then(() => Promise.reject(new Error('create error')));
-              } else {
-                const resource = { id: ++id };
-                createdResources.push(resource);
-                return d.then(() => resource);
-              }
-            },
+            if (Math.random() < createFailProp) {
+              return d.then(() => Promise.reject(new Error('create error')));
+            } else {
+              const resource = { id: ++id };
+              createdResources.push(resource);
+              return d.then(() => resource);
+            }
+          },
 
-            destroy(resource) {
-              destroyedResources.push(resource);
+          destroy(resource) {
+            destroyedResources.push(resource);
 
-              if (Math.random() < destroyFailProp) {
-                throw new Error('destroy error ' + id);
-              }
-            },
+            if (Math.random() < destroyFailProp) {
+              throw new Error('destroy error ' + id);
+            }
+          },
 
-            validate(resource) {
-              const d = Promise.delay(randInt(maxValidateDelay));
-              return d.then(() => Math.random() > validateFailProp);
-            },
+          validate(resource) {
+            const d = Promise.delay(randInt(maxValidateDelay));
+            return d.then(() => Math.random() > validateFailProp);
+          },
 
-            min: minResources,
-            max: maxResources,
-            reapIntervalMillis,
-            idleTimeoutMillis
+          min: minResources,
+          max: maxResources,
+          reapIntervalMillis,
+          idleTimeoutMillis
+        });
+
+        const actions = [];
+
+        for (let i = 0; i < numActions; ++i) {
+          actions.push(() => {
+            return Promise.delay(randInt(maxAcquireDelay))
+              .then(() => pool.acquire().promise)
+              .then(resource => {
+                expect(usedResources.includes(resource)).toBe(false);
+                expect(pool.numUsed() + pool.numFree()).toBeLessThan(maxResources + 1);
+
+                usedResources.push(resource);
+                return Promise.delay(randInt(maxReleaseDelay)).return(resource);
+              })
+              .then(resource => {
+                usedResources.splice(usedResources.indexOf(resource), 1);
+                pool.release(resource);
+              });
           });
+        }
 
-          const actions = [];
+        return Promise.map(actions, action => action())
+          .then(() => {
+            expect(pool.numUsed()).toBe(0);
+            expect(pool.numFree()).toBeLessThan(maxResources + 1);
 
-          for (let i = 0; i < numActions; ++i) {
-            actions.push(() => {
-              return Promise.delay(randInt(maxAcquireDelay))
-                .then(() => pool.acquire().promise)
-                .then(resource => {
-                  expect(usedResources.includes(resource)).toBe(false);
-                  expect(pool.numUsed() + pool.numFree()).toBeLessThan(maxResources + 1);
-
-                  usedResources.push(resource);
-                  return Promise.delay(randInt(maxReleaseDelay)).return(resource);
-                })
-                .then(resource => {
-                  usedResources.splice(usedResources.indexOf(resource), 1);
-                  pool.release(resource);
-                });
-            });
-          }
-
-          return Promise.map(actions, action => action())
-            .then(() => {
-              expect(pool.numUsed()).toBe(0);
-              expect(pool.numFree()).toBeLessThan(maxResources + 1);
-
-              return pool.destroy();
-            })
-            .then(() => {
-              expect(createdResources.length).toBe(destroyedResources.length);
-              expect(createdResources.every(it => destroyedResources.includes(it)));
-            });
-        },
-        { timeout: 1000000 }
-      );
+            return pool.destroy();
+          })
+          .then(() => {
+            expect(createdResources.length).toBe(destroyedResources.length);
+            expect(createdResources.every(it => destroyedResources.includes(it)));
+          });
+      });
     }
 
     function randInt(max) {
