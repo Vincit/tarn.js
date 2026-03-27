@@ -46,7 +46,7 @@ describe('Tarn', () => {
           min: 0,
           max: 1
         });
-      }).toThrow('Tarn: opt.create function most be provided');
+      }).to.throw('Tarn: opt.create function most be provided');
     });
 
     it('should fail if no opt.destroy function is given', () => {
@@ -56,7 +56,7 @@ describe('Tarn', () => {
           min: 0,
           max: 1
         });
-      }).toThrow('Tarn: opt.destroy function most be provided');
+      }).to.throw('Tarn: opt.destroy function most be provided');
     });
 
     it('should fail if opt.min is missing', () => {
@@ -66,7 +66,7 @@ describe('Tarn', () => {
           destroy() {},
           max: 1
         });
-      }).toThrow('Tarn: opt.min must be an integer >= 0');
+      }).to.throw('Tarn: opt.min must be an integer >= 0');
     });
 
     it('should fail if a non-integer opt.min is given', () => {
@@ -77,7 +77,7 @@ describe('Tarn', () => {
           min: '0',
           max: 1
         });
-      }).toThrow('Tarn: opt.min must be an integer >= 0');
+      }).to.throw('Tarn: opt.min must be an integer >= 0');
     });
 
     it('should fail if a negative opt.min is given', () => {
@@ -88,7 +88,7 @@ describe('Tarn', () => {
           min: -1,
           max: 1
         });
-      }).toThrow('Tarn: opt.min must be an integer >= 0');
+      }).to.throw('Tarn: opt.min must be an integer >= 0');
     });
 
     it('should fail if opt.max is missing', () => {
@@ -98,7 +98,7 @@ describe('Tarn', () => {
           destroy() {},
           min: 0
         });
-      }).toThrow('Tarn: opt.max must be an integer > 0');
+      }).to.throw('Tarn: opt.max must be an integer > 0');
     });
 
     it('should fail if a non-integer opt.max is given', () => {
@@ -109,7 +109,7 @@ describe('Tarn', () => {
           min: 0,
           max: '1'
         });
-      }).toThrow('Tarn: opt.max must be an integer > 0');
+      }).to.throw('Tarn: opt.max must be an integer > 0');
     });
 
     it('should fail if a negative opt.max is given', () => {
@@ -120,7 +120,7 @@ describe('Tarn', () => {
           min: 0,
           max: -1
         });
-      }).toThrow('Tarn: opt.max must be an integer > 0');
+      }).to.throw('Tarn: opt.max must be an integer > 0');
     });
 
     it('should fail if a zero opt.max is given', () => {
@@ -131,7 +131,7 @@ describe('Tarn', () => {
           min: 0,
           max: 0
         });
-      }).toThrow('Tarn: opt.max must be an integer > 0');
+      }).to.throw('Tarn: opt.max must be an integer > 0');
     });
 
     it('should fail if opt.min > opt.max is given', () => {
@@ -142,7 +142,7 @@ describe('Tarn', () => {
           min: 2,
           max: 1
         });
-      }).toThrow('Tarn: opt.max is smaller than opt.min');
+      }).to.throw('Tarn: opt.max is smaller than opt.min');
     });
 
     it('should fail if a non-integer opt.acquireTimeoutMillis is given', () => {
@@ -154,7 +154,7 @@ describe('Tarn', () => {
           max: 10,
           acquireTimeoutMillis: '10'
         });
-      }).toThrow('Tarn: invalid opt.acquireTimeoutMillis "10"');
+      }).to.throw('Tarn: invalid opt.acquireTimeoutMillis "10"');
     });
 
     it('should fail if a negative opt.acquireTimeoutMillis is given', () => {
@@ -166,7 +166,7 @@ describe('Tarn', () => {
           max: 10,
           acquireTimeoutMillis: -10
         });
-      }).toThrow('Tarn: invalid opt.acquireTimeoutMillis -10');
+      }).to.throw('Tarn: invalid opt.acquireTimeoutMillis -10');
     });
 
     it('should fail if a zero opt.acquireTimeoutMillis is given', () => {
@@ -178,7 +178,7 @@ describe('Tarn', () => {
           max: 10,
           acquireTimeoutMillis: 0
         });
-      }).toThrow('Tarn: invalid opt.acquireTimeoutMillis 0');
+      }).to.throw('Tarn: invalid opt.acquireTimeoutMillis 0');
     });
 
     it('should fail if a non-integer opt.createTimeoutMillis is given', () => {
@@ -190,7 +190,7 @@ describe('Tarn', () => {
           max: 10,
           createTimeoutMillis: '10'
         });
-      }).toThrow('Tarn: invalid opt.createTimeoutMillis "10"');
+      }).to.throw('Tarn: invalid opt.createTimeoutMillis "10"');
     });
 
     it('should fail if a negative opt.createTimeoutMillis is given', () => {
@@ -202,7 +202,7 @@ describe('Tarn', () => {
           max: 10,
           createTimeoutMillis: -10
         });
-      }).toThrow('Tarn: invalid opt.createTimeoutMillis -10');
+      }).to.throw('Tarn: invalid opt.createTimeoutMillis -10');
     });
 
     it('should fail if a zero opt.createTimeoutMillis is given', () => {
@@ -214,7 +214,7 @@ describe('Tarn', () => {
           max: 10,
           createTimeoutMillis: 0
         });
-      }).toThrow('Tarn: invalid opt.createTimeoutMillis 0');
+      }).to.throw('Tarn: invalid opt.createTimeoutMillis 0');
     });
 
     it('should fail if a non-integer opt.destroyTimeoutMillis is given', () => {
@@ -226,7 +226,7 @@ describe('Tarn', () => {
           max: 10,
           destroyTimeoutMillis: '10'
         });
-      }).toThrow('Tarn: invalid opt.destroyTimeoutMillis "10"');
+      }).to.throw('Tarn: invalid opt.destroyTimeoutMillis "10"');
     });
 
     it('should fail if a negative opt.destroyTimeoutMillis is given', () => {
@@ -238,7 +238,7 @@ describe('Tarn', () => {
           max: 10,
           destroyTimeoutMillis: -10
         });
-      }).toThrow('Tarn: invalid opt.destroyTimeoutMillis -10');
+      }).to.throw('Tarn: invalid opt.destroyTimeoutMillis -10');
     });
 
     it('should fail if a zero opt.destroyTimeoutMillis is given', () => {
@@ -250,7 +250,7 @@ describe('Tarn', () => {
           max: 10,
           destroyTimeoutMillis: 0
         });
-      }).toThrow('Tarn: invalid opt.destroyTimeoutMillis 0');
+      }).to.throw('Tarn: invalid opt.destroyTimeoutMillis 0');
     });
 
     it('should fail if a non-integer opt.idleTimeoutMillis is given', () => {
@@ -262,7 +262,7 @@ describe('Tarn', () => {
           max: 10,
           idleTimeoutMillis: '10'
         });
-      }).toThrow('Tarn: invalid opt.idleTimeoutMillis "10"');
+      }).to.throw('Tarn: invalid opt.idleTimeoutMillis "10"');
     });
 
     it('should fail if a negative opt.idleTimeoutMillis is given', () => {
@@ -274,7 +274,7 @@ describe('Tarn', () => {
           max: 10,
           idleTimeoutMillis: -10
         });
-      }).toThrow('Tarn: invalid opt.idleTimeoutMillis -10');
+      }).to.throw('Tarn: invalid opt.idleTimeoutMillis -10');
     });
 
     it('should fail if a zero opt.idleTimeoutMillis is given', () => {
@@ -286,7 +286,7 @@ describe('Tarn', () => {
           max: 10,
           idleTimeoutMillis: 0
         });
-      }).toThrow('Tarn: invalid opt.idleTimeoutMillis 0');
+      }).to.throw('Tarn: invalid opt.idleTimeoutMillis 0');
     });
 
     it('should fail if a non-integer opt.reapIntervalMillis is given', () => {
@@ -298,7 +298,7 @@ describe('Tarn', () => {
           max: 10,
           reapIntervalMillis: '10'
         });
-      }).toThrow('Tarn: invalid opt.reapIntervalMillis "10"');
+      }).to.throw('Tarn: invalid opt.reapIntervalMillis "10"');
     });
 
     it('should fail if a negative opt.reapIntervalMillis is given', () => {
@@ -310,7 +310,7 @@ describe('Tarn', () => {
           max: 10,
           reapIntervalMillis: -10
         });
-      }).toThrow('Tarn: invalid opt.reapIntervalMillis -10');
+      }).to.throw('Tarn: invalid opt.reapIntervalMillis -10');
     });
 
     it('should fail if a zero opt.reapIntervalMillis is given', () => {
@@ -322,7 +322,7 @@ describe('Tarn', () => {
           max: 10,
           reapIntervalMillis: 0
         });
-      }).toThrow('Tarn: invalid opt.reapIntervalMillis 0');
+      }).to.throw('Tarn: invalid opt.reapIntervalMillis 0');
     });
 
     it('should fail if unknown option passed', () => {
@@ -334,7 +334,7 @@ describe('Tarn', () => {
           max: 10,
           imUnreal: undefined
         });
-      }).toThrow('Tarn: unsupported option opt.imUnreal');
+      }).to.throw('Tarn: unsupported option opt.imUnreal');
     });
   });
 
@@ -365,21 +365,21 @@ describe('Tarn', () => {
         pool.acquire().promise
       ]);
 
-      expect(pool.numUsed()).toBe(0);
-      expect(pool.numFree()).toBe(0);
-      expect(pool.numPendingAcquires()).toBe(4);
-      expect(pool.numPendingCreates()).toBe(4);
+      expect(pool.numUsed()).to.equal(0);
+      expect(pool.numFree()).to.equal(0);
+      expect(pool.numPendingAcquires()).to.equal(4);
+      expect(pool.numPendingCreates()).to.equal(4);
 
       return acquirePromise.then(res => {
-        expect(sortBy(res, 'a')).toEqual([{ a: 0 }, { a: 1 }, { a: 2 }, { a: 3 }]);
+        expect(sortBy(res, 'a')).to.eql([{ a: 0 }, { a: 1 }, { a: 2 }, { a: 3 }]);
 
-        expect(createCalled).toBe(4);
-        expect(destroyCalled).toBe(0);
+        expect(createCalled).to.equal(4);
+        expect(destroyCalled).to.equal(0);
 
-        expect(pool.numUsed()).toBe(4);
-        expect(pool.numFree()).toBe(0);
-        expect(pool.numPendingAcquires()).toBe(0);
-        expect(pool.numPendingCreates()).toBe(0);
+        expect(pool.numUsed()).to.equal(4);
+        expect(pool.numFree()).to.equal(0);
+        expect(pool.numPendingAcquires()).to.equal(0);
+        expect(pool.numPendingCreates()).to.equal(0);
       });
     });
 
@@ -405,21 +405,21 @@ describe('Tarn', () => {
         pool.acquire().promise
       ]);
 
-      expect(pool.numUsed()).toBe(0);
-      expect(pool.numFree()).toBe(0);
-      expect(pool.numPendingAcquires()).toBe(4);
-      expect(pool.numPendingCreates()).toBe(4);
+      expect(pool.numUsed()).to.equal(0);
+      expect(pool.numFree()).to.equal(0);
+      expect(pool.numPendingAcquires()).to.equal(4);
+      expect(pool.numPendingCreates()).to.equal(4);
 
       return acquirePromise.then(res => {
-        expect(sortBy(res, 'a')).toEqual([{ a: 0 }, { a: 1 }, { a: 2 }, { a: 3 }]);
+        expect(sortBy(res, 'a')).to.eql([{ a: 0 }, { a: 1 }, { a: 2 }, { a: 3 }]);
 
-        expect(createCalled).toBe(4);
-        expect(destroyCalled).toBe(0);
+        expect(createCalled).to.equal(4);
+        expect(destroyCalled).to.equal(0);
 
-        expect(pool.numUsed()).toBe(4);
-        expect(pool.numFree()).toBe(0);
-        expect(pool.numPendingAcquires()).toBe(0);
-        expect(pool.numPendingCreates()).toBe(0);
+        expect(pool.numUsed()).to.equal(4);
+        expect(pool.numFree()).to.equal(0);
+        expect(pool.numPendingAcquires()).to.equal(0);
+        expect(pool.numPendingCreates()).to.equal(0);
       });
     });
 
@@ -444,15 +444,15 @@ describe('Tarn', () => {
         pool.acquire().promise,
         pool.acquire().promise
       ]).then(res => {
-        expect(sortBy(res, 'a')).toEqual([{ a: 0 }, { a: 1 }, { a: 2 }, { a: 3 }]);
+        expect(sortBy(res, 'a')).to.eql([{ a: 0 }, { a: 1 }, { a: 2 }, { a: 3 }]);
 
-        expect(createCalled).toBe(4);
-        expect(destroyCalled).toBe(0);
+        expect(createCalled).to.equal(4);
+        expect(destroyCalled).to.equal(0);
 
-        expect(pool.numUsed()).toBe(4);
-        expect(pool.numFree()).toBe(0);
-        expect(pool.numPendingAcquires()).toBe(0);
-        expect(pool.numPendingCreates()).toBe(0);
+        expect(pool.numUsed()).to.equal(4);
+        expect(pool.numFree()).to.equal(0);
+        expect(pool.numPendingAcquires()).to.equal(0);
+        expect(pool.numPendingCreates()).to.equal(0);
       });
     });
 
@@ -479,15 +479,15 @@ describe('Tarn', () => {
       });
 
       return pool.acquire().promise.then(res => {
-        expect(res).toEqual({ a: 1 });
+        expect(res).to.eql({ a: 1 });
 
-        expect(createCalled).toBe(2);
-        expect(destroyCalled).toBe(0);
+        expect(createCalled).to.equal(2);
+        expect(destroyCalled).to.equal(0);
 
-        expect(pool.numUsed()).toBe(1);
-        expect(pool.numFree()).toBe(0);
-        expect(pool.numPendingAcquires()).toBe(0);
-        expect(pool.numPendingCreates()).toBe(0);
+        expect(pool.numUsed()).to.equal(1);
+        expect(pool.numFree()).to.equal(0);
+        expect(pool.numPendingAcquires()).to.equal(0);
+        expect(pool.numPendingCreates()).to.equal(0);
       });
     });
 
@@ -518,21 +518,21 @@ describe('Tarn', () => {
       return pool
         .acquire()
         .promise.then(res => {
-          expect(res).toEqual({ a: 2 });
+          expect(res).to.eql({ a: 2 });
 
-          expect(createCalled).toBe(2);
+          expect(createCalled).to.equal(2);
 
-          expect(pool.numUsed()).toBe(1);
-          expect(pool.numFree()).toBe(0);
-          expect(pool.numPendingAcquires()).toBe(0);
-          expect(pool.numPendingCreates()).toBe(0);
+          expect(pool.numUsed()).to.equal(1);
+          expect(pool.numFree()).to.equal(0);
+          expect(pool.numPendingAcquires()).to.equal(0);
+          expect(pool.numPendingCreates()).to.equal(0);
 
           // Wait until the first resource has resolved
           return new Promise(resolve => setTimeout(resolve, 200));
         })
         .then(() => {
           // Now check first resource was destroyed
-          expect(destroyCalled).toBe(1);
+          expect(destroyCalled).to.equal(1);
         });
     });
 
@@ -556,17 +556,17 @@ describe('Tarn', () => {
         pool.acquire().promise,
         pool.acquire().promise
       ]).then(res => {
-        expect(sortBy(res, 'a')).toEqual([{ a: 0 }, { a: 1 }, { a: 2 }, { a: 3 }, { a: 4 }]);
+        expect(sortBy(res, 'a')).to.eql([{ a: 0 }, { a: 1 }, { a: 2 }, { a: 3 }, { a: 4 }]);
 
-        expect(createCalled).toBe(5);
-        expect(pool.numUsed()).toBe(5);
-        expect(pool.numFree()).toBe(0);
-        expect(pool.numPendingAcquires()).toBe(0);
-        expect(pool.numPendingCreates()).toBe(0);
+        expect(createCalled).to.equal(5);
+        expect(pool.numUsed()).to.equal(5);
+        expect(pool.numFree()).to.equal(0);
+        expect(pool.numPendingAcquires()).to.equal(0);
+        expect(pool.numPendingCreates()).to.equal(0);
 
         let newAcquires = [pool.acquire().promise, pool.acquire().promise, pool.acquire().promise];
 
-        expect(pool.numPendingAcquires()).toBe(3);
+        expect(pool.numPendingAcquires()).to.equal(3);
 
         setTimeout(() => {
           pool.release(res[2]);
@@ -576,17 +576,17 @@ describe('Tarn', () => {
         }, 100);
 
         return Promise.all(newAcquires).then(newRes => {
-          expect(releasesCalled).toBe(true);
+          expect(releasesCalled).to.equal(true);
 
-          expect(newRes[0] === res[2]).toBe(true);
-          expect(newRes[1] === res[3]).toBe(true);
-          expect(newRes[2] === res[4]).toBe(true);
+          expect(newRes[0] === res[2]).to.equal(true);
+          expect(newRes[1] === res[3]).to.equal(true);
+          expect(newRes[2] === res[4]).to.equal(true);
 
-          expect(createCalled).toBe(5);
-          expect(pool.numUsed()).toBe(5);
-          expect(pool.numFree()).toBe(0);
-          expect(pool.numPendingAcquires()).toBe(0);
-          expect(pool.numPendingCreates()).toBe(0);
+          expect(createCalled).to.equal(5);
+          expect(pool.numUsed()).to.equal(5);
+          expect(pool.numFree()).to.equal(0);
+          expect(pool.numPendingAcquires()).to.equal(0);
+          expect(pool.numPendingCreates()).to.equal(0);
         });
       });
     });
@@ -611,7 +611,7 @@ describe('Tarn', () => {
       });
 
       let acquire = pool.acquire();
-      expect(pool.numPendingCreates()).toBe(1);
+      expect(pool.numPendingCreates()).to.equal(1);
 
       setTimeout(() => {
         acquire.abort();
@@ -622,22 +622,22 @@ describe('Tarn', () => {
           throw new Error('should not get here');
         })
         .catch(err => {
-          expect(err.message).toBe('aborted');
+          expect(err.message).to.equal('aborted');
 
-          expect(createCalled).toBe(1);
+          expect(createCalled).to.equal(1);
 
-          expect(pool.numUsed()).toBe(0);
-          expect(pool.numFree()).toBe(0);
-          expect(pool.numPendingAcquires()).toBe(0);
-          expect(pool.numPendingCreates()).toBe(1);
+          expect(pool.numUsed()).to.equal(0);
+          expect(pool.numFree()).to.equal(0);
+          expect(pool.numPendingAcquires()).to.equal(0);
+          expect(pool.numPendingCreates()).to.equal(1);
 
           return Promise.delay(100).then(() => {
-            expect(createCalled).toBe(1);
-            expect(destroyCalled).toBe(0);
+            expect(createCalled).to.equal(1);
+            expect(destroyCalled).to.equal(0);
 
-            expect(pool.numUsed()).toBe(0);
-            expect(pool.numFree()).toBe(1);
-            expect(pool.numPendingAcquires()).toBe(0);
+            expect(pool.numUsed()).to.equal(0);
+            expect(pool.numFree()).to.equal(1);
+            expect(pool.numPendingAcquires()).to.equal(0);
           });
         });
     });
@@ -664,17 +664,17 @@ describe('Tarn', () => {
 
       return Promise.all([acquire(), acquire()])
         .then(res => {
-          expect(sortBy(res, 'a')).toEqual([
+          expect(sortBy(res, 'a')).to.eql([
             { a: 0, n: 1 },
             { a: 1, n: 1 }
           ]);
 
-          expect(createCalled).toBe(2);
-          expect(destroyCalled).toBe(0);
-          expect(pool.numUsed()).toBe(2);
-          expect(pool.numFree()).toBe(0);
-          expect(pool.numPendingAcquires()).toBe(0);
-          expect(pool.numPendingCreates()).toBe(0);
+          expect(createCalled).to.equal(2);
+          expect(destroyCalled).to.equal(0);
+          expect(pool.numUsed()).to.equal(2);
+          expect(pool.numFree()).to.equal(0);
+          expect(pool.numPendingAcquires()).to.equal(0);
+          expect(pool.numPendingCreates()).to.equal(0);
 
           pool.release(res[0]);
           pool.release(res[1]);
@@ -682,18 +682,18 @@ describe('Tarn', () => {
           return Promise.all([acquire(), acquire()]);
         })
         .then(res => {
-          expect(res).toEqual([
+          expect(res).to.eql([
             { a: 1, n: 2 },
             { a: 2, n: 1 }
           ]);
 
-          expect(createCalled).toBe(3);
-          expect(destroyCalled).toBe(1);
-          expect(destroyed).toEqual({ a: 0, n: 1 });
-          expect(pool.numUsed()).toBe(2);
-          expect(pool.numFree()).toBe(0);
-          expect(pool.numPendingAcquires()).toBe(0);
-          expect(pool.numPendingCreates()).toBe(0);
+          expect(createCalled).to.equal(3);
+          expect(destroyCalled).to.equal(1);
+          expect(destroyed).to.eql({ a: 0, n: 1 });
+          expect(pool.numUsed()).to.equal(2);
+          expect(pool.numFree()).to.equal(0);
+          expect(pool.numPendingAcquires()).to.equal(0);
+          expect(pool.numPendingCreates()).to.equal(0);
         });
 
       function acquire() {
@@ -733,9 +733,9 @@ describe('Tarn', () => {
       .catch(() => {})
       .then(() => {
         // a resource should have been created and it should have been added to the free pool
-        expect(createCalled).toBe(1);
-        expect(pool.numUsed()).toBe(0);
-        expect(pool.numFree()).toBe(1);
+        expect(createCalled).to.equal(1);
+        expect(pool.numUsed()).to.equal(0);
+        expect(pool.numFree()).to.equal(1);
       });
   });
 
@@ -792,9 +792,9 @@ describe('Tarn', () => {
         return Promise.delay(1);
       })
       .then(() => {
-        expect(destroyCalled).toBe(1);
-        expect(createCalled).toBe(1);
-        expect(destroyed).toBe(validated);
+        expect(destroyCalled).to.equal(1);
+        expect(createCalled).to.equal(1);
+        expect(destroyed).to.equal(validated);
       });
   });
 
@@ -832,9 +832,9 @@ describe('Tarn', () => {
       .then(() => Promise.delay(1))
       .then(() => {
         // TODO: validation should immediately return false?
-        expect(destroyCalled).toBe(1);
-        expect(createCalled).toBe(1);
-        expect(destroyed).toBe(validated);
+        expect(destroyCalled).to.equal(1);
+        expect(createCalled).to.equal(1);
+        expect(destroyed).to.equal(validated);
       });
   });
 
@@ -867,8 +867,8 @@ describe('Tarn', () => {
       .acquire()
       .promise.catch(err => {})
       .then(() => {
-        expect(destroyCalled).toBe(5);
-        expect(createCalled).toBe(6);
+        expect(destroyCalled).to.equal(5);
+        expect(createCalled).to.equal(6);
       });
   });
 
@@ -901,8 +901,8 @@ describe('Tarn', () => {
       .acquire()
       .promise.catch(err => {})
       .then(() => {
-        expect(destroyCalled).toBe(1);
-        expect(createCalled).toBe(2);
+        expect(destroyCalled).to.equal(1);
+        expect(createCalled).to.equal(2);
       });
   });
 
@@ -942,11 +942,11 @@ describe('Tarn', () => {
         })
       )
     ).then(() => {
-      expect(validationFails).toBe(validationMaxFailures);
-      expect(createCalled).toBe(validationFails + 3); // failed resource + poolsize
-      expect(validateCalled).toBe(100 + validationFails); // failed resources + acquire count
-      expect(completedAcquires).toBe(100);
-      expect(destroyCalled).toBe(validationFails); // each failed validation should destroy
+      expect(validationFails).to.equal(validationMaxFailures);
+      expect(createCalled).to.equal(validationFails + 3); // failed resource + poolsize
+      expect(validateCalled).to.equal(100 + validationFails); // failed resources + acquire count
+      expect(completedAcquires).to.equal(100);
+      expect(destroyCalled).to.equal(validationFails); // each failed validation should destroy
     });
   });
 
@@ -990,12 +990,12 @@ describe('Tarn', () => {
       .then(() => pool.destroy())
       .then(() => {
         // pool should have been filled with resources and then they sould have been destroyed
-        expect(createCalled).toBe(3);
-        expect(destroyCalled).toBe(3);
+        expect(createCalled).to.equal(3);
+        expect(destroyCalled).to.equal(3);
         // 6 should be completed, because validation phase is waited to
         // acquires before aborting all the rest of the pending acquires
-        expect(completedAcquires).toBe(6);
-        expect(abortedAcquires).toBe(14);
+        expect(completedAcquires).to.equal(6);
+        expect(abortedAcquires).to.equal(14);
       });
   });
 
@@ -1027,7 +1027,7 @@ describe('Tarn', () => {
         return 'wrongerror';
       })
       .then(res => {
-        expect(res).toBe('acquiretimeout');
+        expect(res).to.equal('acquiretimeout');
       });
   });
 
@@ -1050,22 +1050,22 @@ describe('Tarn', () => {
 
       return Promise.all([pool.acquire().promise, pool.acquire().promise, pool.acquire().promise])
         .then(res => {
-          expect(sortBy(res, 'a')).toEqual([{ a: 0 }, { a: 1 }, { a: 2 }]);
+          expect(sortBy(res, 'a')).to.eql([{ a: 0 }, { a: 1 }, { a: 2 }]);
 
-          expect(createCalled).toBe(3);
-          expect(pool.numUsed()).toBe(3);
-          expect(pool.numFree()).toBe(0);
-          expect(pool.numPendingAcquires()).toBe(0);
-          expect(pool.numPendingCreates()).toBe(0);
+          expect(createCalled).to.equal(3);
+          expect(pool.numUsed()).to.equal(3);
+          expect(pool.numFree()).to.equal(0);
+          expect(pool.numPendingAcquires()).to.equal(0);
+          expect(pool.numPendingCreates()).to.equal(0);
 
           pool.release(res[2]);
           pool.release(res[1]);
 
-          expect(createCalled).toBe(3);
-          expect(pool.numUsed()).toBe(1);
-          expect(pool.numFree()).toBe(2);
-          expect(pool.numPendingAcquires()).toBe(0);
-          expect(pool.numPendingCreates()).toBe(0);
+          expect(createCalled).to.equal(3);
+          expect(pool.numUsed()).to.equal(1);
+          expect(pool.numFree()).to.equal(2);
+          expect(pool.numPendingAcquires()).to.equal(0);
+          expect(pool.numPendingCreates()).to.equal(0);
 
           return Promise.all([
             pool.acquire().promise,
@@ -1074,13 +1074,13 @@ describe('Tarn', () => {
           ]);
         })
         .then(res => {
-          expect(res).toEqual([{ a: 1 }, { a: 2 }, { a: 3 }]);
+          expect(res).to.eql([{ a: 1 }, { a: 2 }, { a: 3 }]);
 
-          expect(createCalled).toBe(4);
-          expect(pool.numUsed()).toBe(4);
-          expect(pool.numFree()).toBe(0);
-          expect(pool.numPendingAcquires()).toBe(0);
-          expect(pool.numPendingCreates()).toBe(0);
+          expect(createCalled).to.equal(4);
+          expect(pool.numUsed()).to.equal(4);
+          expect(pool.numFree()).to.equal(0);
+          expect(pool.numPendingAcquires()).to.equal(0);
+          expect(pool.numPendingCreates()).to.equal(0);
         });
     });
 
@@ -1105,11 +1105,11 @@ describe('Tarn', () => {
         .then(res => {
           let pendingAcquire = pool.acquire();
 
-          expect(createCalled).toBe(2);
-          expect(pool.numUsed()).toBe(2);
-          expect(pool.numFree()).toBe(0);
-          expect(pool.numPendingAcquires()).toBe(1);
-          expect(pool.numPendingCreates()).toBe(0);
+          expect(createCalled).to.equal(2);
+          expect(pool.numUsed()).to.equal(2);
+          expect(pool.numFree()).to.equal(0);
+          expect(pool.numPendingAcquires()).to.equal(1);
+          expect(pool.numPendingCreates()).to.equal(0);
 
           setTimeout(() => {
             releaseCalled = true;
@@ -1119,8 +1119,8 @@ describe('Tarn', () => {
           return pendingAcquire.promise;
         })
         .then(res => {
-          expect(res).toEqual({ a: 1 });
-          expect(releaseCalled).toBe(true);
+          expect(res).to.eql({ a: 1 });
+          expect(releaseCalled).to.equal(true);
         });
     });
 
@@ -1144,19 +1144,19 @@ describe('Tarn', () => {
       });
 
       return Promise.all([pool.acquire().promise, pool.acquire().promise]).then(res => {
-        expect(sortBy(res, 'a')).toEqual([{ a: 0 }, { a: 1 }]);
+        expect(sortBy(res, 'a')).to.eql([{ a: 0 }, { a: 1 }]);
 
         // These should do nothing, since the resources are not referentially equal.
         pool.release({ a: 0 });
         pool.release({ a: 1 });
         pool.release({});
 
-        expect(createCalled).toBe(2);
-        expect(destroyCalled).toBe(0);
-        expect(pool.numUsed()).toBe(2);
-        expect(pool.numFree()).toBe(0);
-        expect(pool.numPendingAcquires()).toBe(0);
-        expect(pool.numPendingCreates()).toBe(0);
+        expect(createCalled).to.equal(2);
+        expect(destroyCalled).to.equal(0);
+        expect(pool.numUsed()).to.equal(2);
+        expect(pool.numFree()).to.equal(0);
+        expect(pool.numPendingAcquires()).to.equal(0);
+        expect(pool.numPendingCreates()).to.equal(0);
       });
     });
   });
@@ -1193,7 +1193,7 @@ describe('Tarn', () => {
               throw new Error('should not get here since the creation takes 50 ms');
             })
             .catch(err => {
-              expect(err.message).toBe('aborted');
+              expect(err.message).to.equal('aborted');
               // destroy should abort
               abortCalled = true;
             });
@@ -1207,16 +1207,16 @@ describe('Tarn', () => {
           return pool.destroy();
         })
         .then(() => {
-          expect(abortCalled).toBe(true);
-          expect(releaseCalled).toBe(true);
+          expect(abortCalled).to.equal(true);
+          expect(releaseCalled).to.equal(true);
 
-          expect(createCalled).toBe(3);
-          expect(destroyCalled).toBe(3);
+          expect(createCalled).to.equal(3);
+          expect(destroyCalled).to.equal(3);
 
-          expect(pool.numUsed()).toBe(0);
-          expect(pool.numFree()).toBe(0);
-          expect(pool.numPendingAcquires()).toBe(0);
-          expect(pool.numPendingCreates()).toBe(0);
+          expect(pool.numUsed()).to.equal(0);
+          expect(pool.numFree()).to.equal(0);
+          expect(pool.numPendingAcquires()).to.equal(0);
+          expect(pool.numPendingCreates()).to.equal(0);
         });
     });
 
@@ -1252,7 +1252,7 @@ describe('Tarn', () => {
               throw new Error('should not get here since the creation takes 50 ms');
             })
             .catch(err => {
-              expect(err.message).toBe('aborted');
+              expect(err.message).to.equal('aborted');
               // destroy should abort
               abortCalled = true;
             });
@@ -1266,16 +1266,16 @@ describe('Tarn', () => {
           return pool.destroy();
         })
         .then(() => {
-          expect(abortCalled).toBe(true);
-          expect(releaseCalled).toBe(true);
+          expect(abortCalled).to.equal(true);
+          expect(releaseCalled).to.equal(true);
 
-          expect(createCalled).toBe(3);
-          expect(destroyCalled).toBe(3);
+          expect(createCalled).to.equal(3);
+          expect(destroyCalled).to.equal(3);
 
-          expect(pool.numUsed()).toBe(0);
-          expect(pool.numFree()).toBe(0);
-          expect(pool.numPendingAcquires()).toBe(0);
-          expect(pool.numPendingCreates()).toBe(0);
+          expect(pool.numUsed()).to.equal(0);
+          expect(pool.numFree()).to.equal(0);
+          expect(pool.numPendingAcquires()).to.equal(0);
+          expect(pool.numPendingCreates()).to.equal(0);
         });
     });
 
@@ -1306,7 +1306,7 @@ describe('Tarn', () => {
           return pool.destroy();
         })
         .then(() => {
-          expect(destroyerErrorThrown).toBe(true);
+          expect(destroyerErrorThrown).to.equal(true);
         });
     });
 
@@ -1337,7 +1337,7 @@ describe('Tarn', () => {
           return pool.destroy();
         })
         .then(() => {
-          expect(destroyerErrorThrown).toBe(true);
+          expect(destroyerErrorThrown).to.equal(true);
         });
     });
 
@@ -1372,7 +1372,7 @@ describe('Tarn', () => {
           return pool.destroy();
         })
         .then(() => {
-          expect(destroyerErrorThrown).toBe(true);
+          expect(destroyerErrorThrown).to.equal(true);
         });
     });
 
@@ -1414,10 +1414,10 @@ describe('Tarn', () => {
           return pool.destroy().then(() => resources);
         })
         .then(resources => {
-          expect(resources[0].destroyed).toBeTruthy();
-          expect(resources[1].destroyed).toBeTruthy();
-          expect(resources[2].destroyed).toBeTruthy();
-          expect(resources[3].destroyed).toBeTruthy();
+          expect(resources[0].destroyed).to.be.ok;
+          expect(resources[1].destroyed).to.be.ok;
+          expect(resources[2].destroyed).to.be.ok;
+          expect(resources[3].destroyed).to.be.ok;
         });
     });
   });
@@ -1457,16 +1457,16 @@ describe('Tarn', () => {
         .catch(err => {
           let duration = Date.now() - now;
 
-          expect(err).toBeInstanceOf(TimeoutError);
+          expect(err).to.be.an.instanceof(TimeoutError);
 
-          expect(duration).toBeGreaterThan(acquireTimeoutMillis - 5);
-          expect(duration - acquireTimeoutMillis).toBeLessThan(50);
+          expect(duration).to.be.greaterThan(acquireTimeoutMillis - 5);
+          expect(duration - acquireTimeoutMillis).to.be.lessThan(50);
 
-          expect(createCalled).toBe(5);
-          expect(pool.numUsed()).toBe(5);
-          expect(pool.numFree()).toBe(0);
-          expect(pool.numPendingAcquires()).toBe(0);
-          expect(pool.numPendingCreates()).toBe(0);
+          expect(createCalled).to.equal(5);
+          expect(pool.numUsed()).to.equal(5);
+          expect(pool.numFree()).to.equal(0);
+          expect(pool.numPendingAcquires()).to.equal(0);
+          expect(pool.numPendingCreates()).to.equal(0);
         });
     });
 
@@ -1499,17 +1499,17 @@ describe('Tarn', () => {
         .catch(err => {
           let duration = Date.now() - now;
 
-          expect(err).toBeInstanceOf(TimeoutError);
-          expect(err.message).toBe('this is the error from create');
+          expect(err).to.be.an.instanceof(TimeoutError);
+          expect(err.message).to.equal('this is the error from create');
 
-          expect(duration).toBeGreaterThan(acquireTimeoutMillis - 5);
-          expect(duration - acquireTimeoutMillis).toBeLessThan(50);
+          expect(duration).to.be.greaterThan(acquireTimeoutMillis - 5);
+          expect(duration - acquireTimeoutMillis).to.be.lessThan(50);
 
-          expect(createCalled).toBe(1);
-          expect(pool.numUsed()).toBe(0);
-          expect(pool.numFree()).toBe(0);
-          expect(pool.numPendingAcquires()).toBe(0);
-          expect(pool.numPendingCreates()).toBe(0);
+          expect(createCalled).to.equal(1);
+          expect(pool.numUsed()).to.equal(0);
+          expect(pool.numFree()).to.equal(0);
+          expect(pool.numPendingAcquires()).to.equal(0);
+          expect(pool.numPendingCreates()).to.equal(0);
         });
     });
 
@@ -1538,17 +1538,17 @@ describe('Tarn', () => {
         .catch(err => {
           let duration = Date.now() - now;
 
-          expect(err).toBeInstanceOf(TimeoutError);
-          expect(err.message).toBe('this is the error from create');
+          expect(err).to.be.an.instanceof(TimeoutError);
+          expect(err.message).to.equal('this is the error from create');
 
-          expect(duration).toBeGreaterThan(acquireTimeoutMillis - 5);
-          expect(duration - acquireTimeoutMillis).toBeLessThan(50);
+          expect(duration).to.be.greaterThan(acquireTimeoutMillis - 5);
+          expect(duration - acquireTimeoutMillis).to.be.lessThan(50);
 
-          expect(createCalled).toBe(1);
-          expect(pool.numUsed()).toBe(0);
-          expect(pool.numFree()).toBe(0);
-          expect(pool.numPendingAcquires()).toBe(0);
-          expect(pool.numPendingCreates()).toBe(0);
+          expect(createCalled).to.equal(1);
+          expect(pool.numUsed()).to.equal(0);
+          expect(pool.numFree()).to.equal(0);
+          expect(pool.numPendingAcquires()).to.equal(0);
+          expect(pool.numPendingCreates()).to.equal(0);
         });
     });
   });
@@ -1582,21 +1582,21 @@ describe('Tarn', () => {
 
       let duration = Date.now() - now;
 
-      expect(res1.isRejected()).toBe(true);
-      expect(res1.reason()).not.toBeInstanceOf(TimeoutError);
-      expect(res1.reason().message).toBe('create fail');
+      expect(res1.isRejected()).to.equal(true);
+      expect(res1.reason()).not.to.be.an.instanceof(TimeoutError);
+      expect(res1.reason().message).to.equal('create fail');
 
-      expect(res2.isFulfilled()).toBe(true);
-      expect(res2.value()).toEqual({ value: 2 });
+      expect(res2.isFulfilled()).to.equal(true);
+      expect(res2.value()).to.eql({ value: 2 });
 
       // duration to fail should be significantly smaller than the acquireTimeoutMillis.
-      expect(duration).toBeLessThan(acquireTimeoutMillis - 500);
+      expect(duration).to.be.lessThan(acquireTimeoutMillis - 500);
 
-      expect(createCalled).toBe(2);
-      expect(pool.numUsed()).toBe(1);
-      expect(pool.numFree()).toBe(0);
-      expect(pool.numPendingAcquires()).toBe(0);
-      expect(pool.numPendingCreates()).toBe(0);
+      expect(createCalled).to.equal(2);
+      expect(pool.numUsed()).to.equal(1);
+      expect(pool.numFree()).to.equal(0);
+      expect(pool.numPendingAcquires()).to.equal(0);
+      expect(pool.numPendingCreates()).to.equal(0);
     });
   });
 
@@ -1630,31 +1630,31 @@ describe('Tarn', () => {
         pool.acquire().promise
       ]);
 
-      expect(sortBy(res, 'a')).toEqual([{ a: 0 }, { a: 1 }, { a: 2 }]);
+      expect(sortBy(res, 'a')).to.eql([{ a: 0 }, { a: 1 }, { a: 2 }]);
 
-      expect(pool.numUsed()).toBe(3);
-      expect(pool.numFree()).toBe(0);
+      expect(pool.numUsed()).to.equal(3);
+      expect(pool.numFree()).to.equal(0);
 
       pool.release(res[0]);
       pool.release(res[1]);
 
-      expect(destroyCalled).toBe(0);
-      expect(pool.numUsed()).toBe(1);
-      expect(pool.numFree()).toBe(2);
+      expect(destroyCalled).to.equal(0);
+      expect(pool.numUsed()).to.equal(1);
+      expect(pool.numFree()).to.equal(2);
 
       await Promise.delay(50);
 
-      expect(destroyCalled).toBe(0);
-      expect(pool.numUsed()).toBe(1);
-      expect(pool.numFree()).toBe(2);
+      expect(destroyCalled).to.equal(0);
+      expect(pool.numUsed()).to.equal(1);
+      expect(pool.numFree()).to.equal(2);
 
       await Promise.delay(65);
 
-      expect(destroyed).toEqual([{ a: 0 }, { a: 1 }]);
+      expect(destroyed).to.eql([{ a: 0 }, { a: 1 }]);
 
-      expect(destroyCalled).toBe(2);
-      expect(pool.numUsed()).toBe(1);
-      expect(pool.numFree()).toBe(0);
+      expect(destroyCalled).to.equal(2);
+      expect(pool.numUsed()).to.equal(1);
+      expect(pool.numFree()).to.equal(0);
     });
 
     it('should only run the reaping loop when there is something to reap', async () => {
@@ -1680,25 +1680,25 @@ describe('Tarn', () => {
         reapIntervalMillis: 10
       });
 
-      expect(pool.interval).toBe(null);
+      expect(pool.interval).to.equal(null);
 
       const res = await pool.acquire().promise;
 
-      expect(pool.interval).not.toBe(null);
+      expect(pool.interval).to.not.equal(null);
       pool.release(res);
       await Promise.delay(50);
 
-      expect(pool.interval).not.toBe(null);
+      expect(pool.interval).to.not.equal(null);
       await Promise.delay(65);
 
-      expect(pool.interval).toBe(null);
-      expect(destroyed).toEqual([{ a: 0 }]);
+      expect(pool.interval).to.equal(null);
+      expect(destroyed).to.eql([{ a: 0 }]);
 
       // Should restart the reaping loop again.
       const res2 = await pool.acquire().promise;
 
-      expect(pool.interval).not.toBe(null);
-      expect(res2).toEqual({ a: 1 });
+      expect(pool.interval).to.not.equal(null);
+      expect(res2).to.eql({ a: 1 });
     });
 
     it('should always keep opt.min resources', async () => {
@@ -1731,32 +1731,32 @@ describe('Tarn', () => {
         pool.acquire().promise
       ]);
 
-      expect(sortBy(res, 'a')).toEqual([{ a: 0 }, { a: 1 }, { a: 2 }, { a: 3 }]);
+      expect(sortBy(res, 'a')).to.eql([{ a: 0 }, { a: 1 }, { a: 2 }, { a: 3 }]);
 
-      expect(pool.numUsed()).toBe(4);
-      expect(pool.numFree()).toBe(0);
+      expect(pool.numUsed()).to.equal(4);
+      expect(pool.numFree()).to.equal(0);
 
       pool.release(findBy(res, 'a', 0));
       pool.release(findBy(res, 'a', 1));
       pool.release(findBy(res, 'a', 2));
 
-      expect(destroyCalled).toBe(0);
-      expect(pool.numUsed()).toBe(1);
-      expect(pool.numFree()).toBe(3);
+      expect(destroyCalled).to.equal(0);
+      expect(pool.numUsed()).to.equal(1);
+      expect(pool.numFree()).to.equal(3);
 
       await Promise.delay(50);
 
-      expect(destroyCalled).toBe(0);
-      expect(pool.numUsed()).toBe(1);
-      expect(pool.numFree()).toBe(3);
+      expect(destroyCalled).to.equal(0);
+      expect(pool.numUsed()).to.equal(1);
+      expect(pool.numFree()).to.equal(3);
 
       await Promise.delay(60);
 
-      expect(sortBy(destroyed, 'a')).toEqual([{ a: 0 }, { a: 1 }]);
+      expect(sortBy(destroyed, 'a')).to.eql([{ a: 0 }, { a: 1 }]);
 
-      expect(destroyCalled).toBe(2);
-      expect(pool.numUsed()).toBe(1);
-      expect(pool.numFree()).toBe(1);
+      expect(destroyCalled).to.equal(2);
+      expect(pool.numUsed()).to.equal(1);
+      expect(pool.numFree()).to.equal(1);
     });
 
     it('should release unused resources after idleTimeoutMillis when resources are repeatedly released and freed', async () => {
@@ -1824,9 +1824,9 @@ describe('Tarn', () => {
 
       finished = true;
 
-      expect(createCalled).toBe(4);
-      expect(destroyCalled).toBe(2);
-      expect(pool.numFree() + pool.numUsed()).toBe(2);
+      expect(createCalled).to.equal(4);
+      expect(destroyCalled).to.equal(2);
+      expect(pool.numFree() + pool.numUsed()).to.equal(2);
     });
   });
 
@@ -1914,19 +1914,19 @@ describe('Tarn', () => {
       const resource2 = await pendingResource2.promise;
 
       // reaping should have started once by now
-      expect(eventStats['startReaping']).toHaveLength(1);
-      expect(eventStats['stopReaping']).toBeUndefined();
+      expect(eventStats['startReaping']).to.have.length(1);
+      expect(eventStats['stopReaping']).to.be.undefined;
 
       const pendingResource3 = pool.acquire();
       const failed = await pendingResource3.promise.catch(() => 'did fail');
-      expect(failed).toBe('did fail');
+      expect(failed).to.equal('did fail');
 
       pool.release(resource1);
       pool.release(resource2);
       await pool.destroy();
 
-      expect(eventStats['startReaping']).toHaveLength(1);
-      expect(eventStats['stopReaping']).toHaveLength(1);
+      expect(eventStats['startReaping']).to.have.length(1);
+      expect(eventStats['stopReaping']).to.have.length(1);
 
       const resource1Events = eventStats[resource1.eventId];
       const resource1AcquireRequestId = resource1Events.find(event => {
@@ -1941,8 +1941,8 @@ describe('Tarn', () => {
       // acquire request events were also emitted for resources
       const resource1AcquireRequest = eventStats[resource1AcquireRequestId][0];
       const resource2AcquireRequest = eventStats[resource2AcquireRequestId][0];
-      expect(resource1AcquireRequest[0]).toBe('acquireRequest');
-      expect(resource2AcquireRequest[0]).toBe('acquireRequest');
+      expect(resource1AcquireRequest[0]).to.equal('acquireRequest');
+      expect(resource2AcquireRequest[0]).to.equal('acquireRequest');
 
       // destroying one of resources should have failed
       const resource1HasFailedDestroy = resource1Events.some(event => {
@@ -1953,12 +1953,12 @@ describe('Tarn', () => {
         return event[0] === 'destroyFail';
       });
 
-      expect(resource1HasFailedDestroy || resource2HasFailedDestroy).toBe(true);
-      expect(resource1HasFailedDestroy && resource2HasFailedDestroy).toBe(false);
+      expect(resource1HasFailedDestroy || resource2HasFailedDestroy).to.equal(true);
+      expect(resource1HasFailedDestroy && resource2HasFailedDestroy).to.equal(false);
 
       // event ids for request and results match and event arguments too
-      expect(resource1Events).toHaveLength(6);
-      expect(resource2Events).toHaveLength(6);
+      expect(resource1Events).to.have.length(6);
+      expect(resource2Events).to.have.length(6);
 
       function filterEvents(eventArray, prefix) {
         return eventArray.filter(event => {
@@ -1968,8 +1968,8 @@ describe('Tarn', () => {
 
       // check that event pair has same eventId to be able to connect request and result
       function verifyPair(events) {
-        expect(events).toHaveLength(2);
-        expect(events[0][1]).toBe(events[1][1]);
+        expect(events).to.have.length(2);
+        expect(events[0][1]).to.equal(events[1][1]);
       }
 
       verifyPair(filterEvents([resource1AcquireRequest, ...resource1Events], 'acquire'));
@@ -1993,8 +1993,8 @@ describe('Tarn', () => {
       });
 
       // should have one aqcuire and one create failure
-      expect(acquireFailures).toHaveLength(1);
-      expect(createFailures).toHaveLength(1);
+      expect(acquireFailures).to.have.length(1);
+      expect(createFailures).to.have.length(1);
 
       // should have pool destroy events
       const poolDestroy = Object.values(eventStats).filter(events => {
@@ -2004,74 +2004,74 @@ describe('Tarn', () => {
           events[1][0] === 'poolDestroySuccess'
         );
       });
-      expect(poolDestroy).toHaveLength(1);
+      expect(poolDestroy).to.have.length(1);
 
       // should have no extra events
       const allEvents = [].concat(...Object.values(eventStats));
-      expect(allEvents).toHaveLength(22);
+      expect(allEvents).to.have.length(22);
 
       // verify event arguments
       allEvents.forEach(event => {
         const [eventName, ...args] = event;
 
         if (eventName === 'release') {
-          expect(args[0]).toBeInstanceOf(Object);
-          expect(args[1]).toBeUndefined();
-          expect(args[2]).toBeUndefined();
+          expect(args[0]).to.be.an.instanceof(Object);
+          expect(args[1]).to.be.undefined;
+          expect(args[2]).to.be.undefined;
         } else if (eventName === 'acquireRequest') {
-          expect(typeof args[0]).toBe('number');
-          expect(args[1]).toBeUndefined();
-          expect(args[2]).toBeUndefined();
+          expect(args[0]).to.be.a('number');
+          expect(args[1]).to.be.undefined;
+          expect(args[2]).to.be.undefined;
         } else if (eventName === 'acquireSuccess') {
-          expect(typeof args[0]).toBe('number');
-          expect(args[1]).toBeInstanceOf(Object);
-          expect(args[2]).toBeUndefined();
+          expect(args[0]).to.be.a('number');
+          expect(args[1]).to.be.an.instanceof(Object);
+          expect(args[2]).to.be.undefined;
         } else if (eventName === 'acquireFail') {
-          expect(typeof args[0]).toBe('number');
-          expect(args[1]).toBeInstanceOf(Error);
-          expect(args[2]).toBeUndefined();
+          expect(args[0]).to.be.a('number');
+          expect(args[1]).to.be.an.instanceof(Error);
+          expect(args[2]).to.be.undefined;
         } else if (eventName === 'createRequest') {
-          expect(typeof args[0]).toBe('number');
-          expect(args[1]).toBeUndefined();
-          expect(args[2]).toBeUndefined();
+          expect(args[0]).to.be.a('number');
+          expect(args[1]).to.be.undefined;
+          expect(args[2]).to.be.undefined;
         } else if (eventName === 'createSuccess') {
-          expect(typeof args[0]).toBe('number');
-          expect(args[1]).toBeInstanceOf(Object);
-          expect(args[2]).toBeUndefined();
+          expect(args[0]).to.be.a('number');
+          expect(args[1]).to.be.an.instanceof(Object);
+          expect(args[2]).to.be.undefined;
         } else if (eventName === 'createFail') {
-          expect(typeof args[0]).toBe('number');
-          expect(args[1]).toBeInstanceOf(Error);
-          expect(args[2]).toBeUndefined();
+          expect(args[0]).to.be.a('number');
+          expect(args[1]).to.be.an.instanceof(Error);
+          expect(args[2]).to.be.undefined;
         } else if (eventName === 'destroyRequest') {
-          expect(typeof args[0]).toBe('number');
-          expect(args[1]).toBeInstanceOf(Object);
-          expect(args[2]).toBeUndefined();
+          expect(args[0]).to.be.a('number');
+          expect(args[1]).to.be.an.instanceof(Object);
+          expect(args[2]).to.be.undefined;
         } else if (eventName === 'destroySuccess') {
-          expect(typeof args[0]).toBe('number');
-          expect(args[1]).toBeInstanceOf(Object);
-          expect(args[2]).toBeUndefined();
+          expect(args[0]).to.be.a('number');
+          expect(args[1]).to.be.an.instanceof(Object);
+          expect(args[2]).to.be.undefined;
         } else if (eventName === 'destroyFail') {
-          expect(typeof args[0]).toBe('number');
-          expect(args[1]).toBeInstanceOf(Object);
-          expect(args[2]).toBeInstanceOf(Error);
+          expect(args[0]).to.be.a('number');
+          expect(args[1]).to.be.an.instanceof(Object);
+          expect(args[2]).to.be.an.instanceof(Error);
         } else if (eventName === 'startReaping') {
-          expect(args[0]).toBeUndefined();
-          expect(args[1]).toBeUndefined();
-          expect(args[2]).toBeUndefined();
+          expect(args[0]).to.be.undefined;
+          expect(args[1]).to.be.undefined;
+          expect(args[2]).to.be.undefined;
         } else if (eventName === 'stopReaping') {
-          expect(args[0]).toBeUndefined();
-          expect(args[1]).toBeUndefined();
-          expect(args[2]).toBeUndefined();
+          expect(args[0]).to.be.undefined;
+          expect(args[1]).to.be.undefined;
+          expect(args[2]).to.be.undefined;
         } else if (eventName === 'poolDestroyRequest') {
-          expect(typeof args[0]).toBe('number');
-          expect(args[1]).toBeUndefined();
-          expect(args[2]).toBeUndefined();
+          expect(args[0]).to.be.a('number');
+          expect(args[1]).to.be.undefined;
+          expect(args[2]).to.be.undefined;
         } else if (eventName === 'poolDestroySuccess') {
-          expect(typeof args[0]).toBe('number');
-          expect(args[1]).toBeUndefined();
-          expect(args[2]).toBeUndefined();
+          expect(args[0]).to.be.a('number');
+          expect(args[1]).to.be.undefined;
+          expect(args[2]).to.be.undefined;
         } else {
-          expect('Invalid event type').toBe(false);
+          expect('Invalid event type').to.equal(false);
         }
       });
     });
@@ -2126,7 +2126,7 @@ describe('Tarn', () => {
       it('broken listener should not stop running other listeners', async () => {
         const pendingAcquire = pool.acquire();
         const resource = await pendingAcquire.promise;
-        expect(listenerCallCount).toBe(6);
+        expect(listenerCallCount).to.equal(6);
         pool.release(resource);
       });
 
@@ -2134,7 +2134,7 @@ describe('Tarn', () => {
         pool.removeListener('acquireRequest', removableListener);
         const pendingAcquire = pool.acquire();
         const resource = await pendingAcquire.promise;
-        expect(listenerCallCount).toBe(5);
+        expect(listenerCallCount).to.equal(5);
         pool.release(resource);
       });
 
@@ -2142,14 +2142,14 @@ describe('Tarn', () => {
         pool.removeAllListeners('acquireRequest');
         const pendingAcquire = pool.acquire();
         const resource = await pendingAcquire.promise;
-        expect(listenerCallCount).toBe(3);
+        expect(listenerCallCount).to.equal(3);
         pool.release(resource);
       });
 
       it('destroy removes all event listeners', async () => {
-        expect(pool.emitter.eventNames()).toHaveLength(2);
+        expect(pool.emitter.eventNames()).to.have.length(2);
         await pool.destroy();
-        expect(pool.emitter.eventNames()).toHaveLength(0);
+        expect(pool.emitter.eventNames()).to.have.length(0);
       });
     });
 
@@ -2193,8 +2193,8 @@ describe('Tarn', () => {
         {
           const pendingAcquire = localPool.acquire();
           await pendingAcquire.promise.catch(err => {});
-          expect(failures.createFail).toBe(1);
-          expect(failures.acquireFail).toBe(1);
+          expect(failures.createFail).to.equal(1);
+          expect(failures.acquireFail).to.equal(1);
         }
 
         {
@@ -2203,23 +2203,23 @@ describe('Tarn', () => {
           const resource1 = await pendingAcquire1.promise.catch(err => {});
           const pendingAcquire2 = localPool.acquire();
           await pendingAcquire2.promise.catch(err => {});
-          expect(failures.createFail).toBe(1);
-          expect(failures.acquireFail).toBe(2);
-          expect(localPool.release(resource1)).toBe(true);
+          expect(failures.createFail).to.equal(1);
+          expect(failures.acquireFail).to.equal(2);
+          expect(localPool.release(resource1)).to.equal(true);
           await Promise.delay(40);
-          expect(failures.destroyFail).toBe(0);
+          expect(failures.destroyFail).to.equal(0);
         }
 
         {
           destroyDelay = 100;
           const pendingAcquire = localPool.acquire();
           const resource1 = await pendingAcquire.promise.catch(err => {});
-          expect(localPool.release(resource1)).toBe(true);
+          expect(localPool.release(resource1)).to.equal(true);
           await Promise.delay(50); // idling resources should get destroyed
 
-          expect(failures.createFail).toBe(1);
-          expect(failures.acquireFail).toBe(2);
-          expect(failures.destroyFail).toBe(1);
+          expect(failures.createFail).to.equal(1);
+          expect(failures.acquireFail).to.equal(2);
+          expect(failures.destroyFail).to.equal(1);
           destroyDelay = 1;
         }
       } finally {
@@ -2294,8 +2294,8 @@ describe('Tarn', () => {
             return Promise.delay(randInt(maxAcquireDelay))
               .then(() => pool.acquire().promise)
               .then(resource => {
-                expect(usedResources.includes(resource)).toBe(false);
-                expect(pool.numUsed() + pool.numFree()).toBeLessThan(maxResources + 1);
+                expect(usedResources.includes(resource)).to.equal(false);
+                expect(pool.numUsed() + pool.numFree()).to.be.lessThan(maxResources + 1);
 
                 usedResources.push(resource);
                 return Promise.delay(randInt(maxReleaseDelay)).return(resource);
@@ -2309,13 +2309,13 @@ describe('Tarn', () => {
 
         return Promise.map(actions, action => action())
           .then(() => {
-            expect(pool.numUsed()).toBe(0);
-            expect(pool.numFree()).toBeLessThan(maxResources + 1);
+            expect(pool.numUsed()).to.equal(0);
+            expect(pool.numFree()).to.be.lessThan(maxResources + 1);
 
             return pool.destroy();
           })
           .then(() => {
-            expect(createdResources.length).toBe(destroyedResources.length);
+            expect(createdResources.length).to.equal(destroyedResources.length);
             expect(createdResources.every(it => destroyedResources.includes(it)));
           });
       });
