@@ -1881,22 +1881,18 @@ describe('Tarn', () => {
         // third create should fail
         create() {
           if (createCalled > 1) {
-            return Promise.delay(10).then(() => {
-              throw new Error('fail');
-            });
+            return Promise.delay(10).then(() => Promise.reject(new Error('fail')));
           }
-          return Promise.delay(10).then(() => ({ a: ++createCalled }));
+          return Promise.delay(10).then(() => Promise.resolve({ a: ++createCalled }));
         },
 
         // second destory should fail
         destroy(resource) {
           if (destroyCalled > 0) {
-            return Promise.delay(10).then(() => {
-              throw new Error('fail');
-            });
+            return Promise.delay(10).then(() => Promise.reject(new Error('fail')));
           }
           ++destroyCalled;
-          return Promise.delay(10);
+          return Promise.delay(10).then(() => Promise.resolve());
         },
         min: 0,
         max: 3,
@@ -2298,14 +2294,14 @@ describe('Tarn', () => {
 
         pool = new Pool({
           create() {
-            const d = Promise.delay(randInt(maxCreateDelay));
+            const delay = Promise.delay(randInt(maxCreateDelay));
 
             if (Math.random() < createFailProp) {
-              return d.then(() => Promise.reject(new Error('create error')));
+              return delay.then(() => Promise.reject(new Error('create error')));
             } else {
               const resource = { id: ++id };
               createdResources.push(resource);
-              return d.then(() => resource);
+              return delay.then(() => resource);
             }
           },
 
@@ -2318,8 +2314,8 @@ describe('Tarn', () => {
           },
 
           validate(resource) {
-            const d = Promise.delay(randInt(maxValidateDelay));
-            return d.then(() => Math.random() > validateFailProp);
+            const delay = Promise.delay(randInt(maxValidateDelay));
+            return delay.then(() => Math.random() > validateFailProp);
           },
 
           min: minResources,

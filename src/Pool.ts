@@ -278,8 +278,6 @@ export class Pool<T> {
 
     this._stopReaping();
     this.destroyed = true;
-
-    // Clear pending retry timers.
     this.pendingRetryTimers.forEach(timer => clearTimeout(timer));
     this.pendingRetryTimers = [];
 
