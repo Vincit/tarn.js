@@ -1,5 +1,5 @@
 import { version as vitestVersion } from 'vitest/package.json';
-import { describe, it as vitestIt, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import Promise from 'bluebird';
 import { Pool, TimeoutError } from '.';
 
@@ -1568,26 +1568,39 @@ describe('Tarn', () => {
 
       const now = Date.now();
 
-      const res1 = await Promise.resolve(pool.acquire().promise).reflect();
-      const res2 = await Promise.resolve(pool.acquire().promise).reflect();
+      const dfd = deferred();
 
-      const duration = Date.now() - now;
+      Promise.resolve(pool.acquire().promise)
+        .reflect()
+        .then(res1 => {
+          return Promise.resolve(pool.acquire().promise)
+            .reflect()
+            .then(res2 => [res1, res2]);
+        })
+        .spread((res1, res2) => {
+          const duration = Date.now() - now;
 
-      expect(res1.isRejected()).to.equal(true);
-      expect(res1.reason()).not.to.be.an.instanceof(TimeoutError);
-      expect(res1.reason().message).to.equal('create fail');
+          expect(res1.isRejected()).to.equal(true);
+          expect(res1.reason()).to.not.be.instanceOf(TimeoutError);
+          expect(res1.reason().message).to.equal('create fail');
 
-      expect(res2.isFulfilled()).to.equal(true);
-      expect(res2.value()).to.eql({ value: 2 });
+          expect(res2.isFulfilled()).to.equal(true);
+          expect(res2.value()).to.eql({ value: 2 });
 
-      // duration to fail should be significantly smaller than the acquireTimeoutMillis.
-      expect(duration).to.be.lessThan(acquireTimeoutMillis - 500);
+          // duration to fail should be significantly smaller than the acquireTimeoutMillis.
+          expect(duration).to.be.lessThan(acquireTimeoutMillis - 500);
 
-      expect(createCalled).to.equal(2);
-      expect(pool.numUsed()).to.equal(1);
-      expect(pool.numFree()).to.equal(0);
-      expect(pool.numPendingAcquires()).to.equal(0);
-      expect(pool.numPendingCreates()).to.equal(0);
+          expect(createCalled).to.equal(2);
+          expect(pool.numUsed()).to.equal(1);
+          expect(pool.numFree()).to.equal(0);
+          expect(pool.numPendingAcquires()).to.equal(0);
+          expect(pool.numPendingCreates()).to.equal(0);
+
+          dfd.resolve();
+        })
+        .catch(dfd.reject);
+
+      await dfd.promise;
     });
   });
 
@@ -1615,37 +1628,42 @@ describe('Tarn', () => {
         reapIntervalMillis: 10
       });
 
-      const res = await Promise.all([
-        pool.acquire().promise,
-        pool.acquire().promise,
-        pool.acquire().promise
-      ]);
+      const dfd = deferred();
 
-      expect(sortBy(res, 'a')).to.eql([{ a: 0 }, { a: 1 }, { a: 2 }]);
+      Promise.all([pool.acquire().promise, pool.acquire().promise, pool.acquire().promise])
+        .then(res => {
+          expect(sortBy(res, 'a')).to.eql([{ a: 0 }, { a: 1 }, { a: 2 }]);
 
-      expect(pool.numUsed()).to.equal(3);
-      expect(pool.numFree()).to.equal(0);
+          expect(pool.numUsed()).to.equal(3);
+          expect(pool.numFree()).to.equal(0);
 
-      pool.release(res[0]);
-      pool.release(res[1]);
+          pool.release(res[0]);
+          pool.release(res[1]);
 
-      expect(destroyCalled).to.equal(0);
-      expect(pool.numUsed()).to.equal(1);
-      expect(pool.numFree()).to.equal(2);
+          expect(destroyCalled).to.equal(0);
+          expect(pool.numUsed()).to.equal(1);
+          expect(pool.numFree()).to.equal(2);
 
-      await Promise.delay(50);
+          return Promise.delay(50);
+        })
+        .then(() => {
+          expect(destroyCalled).to.equal(0);
+          expect(pool.numUsed()).to.equal(1);
+          expect(pool.numFree()).to.equal(2);
 
-      expect(destroyCalled).to.equal(0);
-      expect(pool.numUsed()).to.equal(1);
-      expect(pool.numFree()).to.equal(2);
+          return Promise.delay(65);
+        })
+        .then(() => {
+          expect(destroyed).to.eql([{ a: 0 }, { a: 1 }]);
 
-      await Promise.delay(65);
+          expect(destroyCalled).to.equal(2);
+          expect(pool.numUsed()).to.equal(1);
+          expect(pool.numFree()).to.equal(0);
 
-      expect(destroyed).to.eql([{ a: 0 }, { a: 1 }]);
-
-      expect(destroyCalled).to.equal(2);
-      expect(pool.numUsed()).to.equal(1);
-      expect(pool.numFree()).to.equal(0);
+          dfd.resolve();
+        })
+        .catch(dfd.reject);
+      return dfd.promise;
     });
 
     it('should only run the reaping loop when there is something to reap', async () => {
@@ -1673,23 +1691,34 @@ describe('Tarn', () => {
 
       expect(pool.interval).to.equal(null);
 
-      const res = await pool.acquire().promise;
+      const dfd = deferred();
 
-      expect(pool.interval).to.not.equal(null);
-      pool.release(res);
-      await Promise.delay(50);
+      pool
+        .acquire()
+        .promise.then(res => {
+          expect(pool.interval).to.not.equal(null);
+          pool.release(res);
+          return Promise.delay(50);
+        })
+        .then(() => {
+          expect(pool.interval).to.not.equal(null);
+          return Promise.delay(65);
+        })
+        .then(() => {
+          expect(pool.interval).to.equal(null);
+          expect(destroyed).to.eql([{ a: 0 }]);
 
-      expect(pool.interval).to.not.equal(null);
-      await Promise.delay(65);
+          // Should restart the reaping loop again.
+          return pool.acquire().promise;
+        })
+        .then(res => {
+          expect(pool.interval).to.not.equal(null);
+          expect(res).to.eql({ a: 1 });
 
-      expect(pool.interval).to.equal(null);
-      expect(destroyed).to.eql([{ a: 0 }]);
-
-      // Should restart the reaping loop again.
-      const res2 = await pool.acquire().promise;
-
-      expect(pool.interval).to.not.equal(null);
-      expect(res2).to.eql({ a: 1 });
+          dfd.resolve();
+        })
+        .catch(dfd.reject);
+      return dfd.promise;
     });
 
     it('should always keep opt.min resources', async () => {
@@ -1715,42 +1744,52 @@ describe('Tarn', () => {
         reapIntervalMillis: 10
       });
 
-      const res = await Promise.all([
+      const dfd = deferred();
+
+      Promise.all([
         pool.acquire().promise,
         pool.acquire().promise,
         pool.acquire().promise,
         pool.acquire().promise
-      ]);
+      ])
+        .then(res => {
+          expect(sortBy(res, 'a')).to.eql([{ a: 0 }, { a: 1 }, { a: 2 }, { a: 3 }]);
 
-      expect(sortBy(res, 'a')).to.eql([{ a: 0 }, { a: 1 }, { a: 2 }, { a: 3 }]);
+          expect(pool.numUsed()).to.equal(4);
+          expect(pool.numFree()).to.equal(0);
 
-      expect(pool.numUsed()).to.equal(4);
-      expect(pool.numFree()).to.equal(0);
+          pool.release(findBy(res, 'a', 0));
+          pool.release(findBy(res, 'a', 1));
+          pool.release(findBy(res, 'a', 2));
 
-      pool.release(findBy(res, 'a', 0));
-      pool.release(findBy(res, 'a', 1));
-      pool.release(findBy(res, 'a', 2));
+          expect(destroyCalled).to.equal(0);
+          expect(pool.numUsed()).to.equal(1);
+          expect(pool.numFree()).to.equal(3);
 
-      expect(destroyCalled).to.equal(0);
-      expect(pool.numUsed()).to.equal(1);
-      expect(pool.numFree()).to.equal(3);
+          return Promise.delay(50);
+        })
+        .then(() => {
+          expect(destroyCalled).to.equal(0);
+          expect(pool.numUsed()).to.equal(1);
+          expect(pool.numFree()).to.equal(3);
 
-      await Promise.delay(50);
+          return Promise.delay(60);
+        })
+        .then(() => {
+          expect(sortBy(destroyed, 'a')).to.eql([{ a: 0 }, { a: 1 }]);
 
-      expect(destroyCalled).to.equal(0);
-      expect(pool.numUsed()).to.equal(1);
-      expect(pool.numFree()).to.equal(3);
+          expect(destroyCalled).to.equal(2);
+          expect(pool.numUsed()).to.equal(1);
+          expect(pool.numFree()).to.equal(1);
 
-      await Promise.delay(60);
+          dfd.resolve();
+        })
+        .catch(dfd.reject);
 
-      expect(sortBy(destroyed, 'a')).to.eql([{ a: 0 }, { a: 1 }]);
-
-      expect(destroyCalled).to.equal(2);
-      expect(pool.numUsed()).to.equal(1);
-      expect(pool.numFree()).to.equal(1);
+      return dfd.promise;
     });
 
-    it('should release unused resources after idleTimeoutMillis when resources are repeatedly released and freed', async () => {
+    it('should release unused resources after idleTimeoutMillis when resources are repeatedly released and freed', () => {
       let createCalled = 0;
       let destroyCalled = 0;
       const destroyed = [];
@@ -1774,50 +1813,61 @@ describe('Tarn', () => {
         reapIntervalMillis: 10
       });
 
-      const res = await Promise.all([
+      const dfd = deferred();
+
+      Promise.all([
         pool.acquire().promise,
         pool.acquire().promise,
         pool.acquire().promise,
         pool.acquire().promise
-      ]);
+      ])
+        .then(res => {
+          pool.release(res[0]);
+          pool.release(res[1]);
 
-      pool.release(res[0]);
-      pool.release(res[1]);
+          // Start two threads that first release a resource and then acquire it again.
+          // Since we only use max 2 resources at a time, the two others hould get
+          // destroyed after idleTimeoutMillis
+          releaseAndAcquireThread(res[2]);
+          releaseAndAcquireThread(res[3]);
 
-      // Start two threads that first release a resource and then acquire it again.
-      // Since we only use max 2 resources at a time, the two others hould get
-      // destroyed after idleTimeoutMillis
-      releaseAndAcquireThread(res[2]);
-      releaseAndAcquireThread(res[3]);
-
-      function releaseAndAcquireThread(res) {
-        if (finished) return;
-        pool.release(res);
-
-        return Promise.delay(rand())
-          .then(() => {
+          function releaseAndAcquireThread(res) {
             if (finished) return;
-            return pool.acquire().promise;
-          })
-          .then(res => {
-            if (finished) return;
-            return Promise.delay(rand()).then(() => {
-              return releaseAndAcquireThread(res);
-            });
-          });
-      }
+            pool.release(res);
 
-      function rand() {
-        return Math.round(1 + Math.random() * 4);
-      }
+            return Promise.delay(rand())
+              .then(() => {
+                if (finished) return;
+                return pool.acquire().promise;
+              })
+              .then(res => {
+                if (finished) return;
+                return Promise.delay(rand()).then(() => {
+                  return releaseAndAcquireThread(res);
+                });
+              });
+          }
 
-      await Promise.delay(200);
+          function rand() {
+            return Math.round(1 + Math.random() * 4);
+          }
 
-      finished = true;
+          return Promise.delay(200);
+        })
+        .then(() => {
+          finished = true;
 
-      expect(createCalled).to.equal(4);
-      expect(destroyCalled).to.equal(2);
-      expect(pool.numFree() + pool.numUsed()).to.equal(2);
+          expect(createCalled).to.equal(4);
+          expect(destroyCalled).to.equal(2);
+          expect(pool.numFree() + pool.numUsed()).to.equal(2);
+          dfd.resolve();
+        })
+        .catch(err => {
+          finished = true;
+          dfd.reject(err);
+        });
+
+      return dfd.promise;
     });
   });
 
@@ -2239,7 +2289,7 @@ describe('Tarn', () => {
       const validateFailProp = Math.random() * 0.5;
 
       const cfg = { timeout: 1000000 };
-      it(`random ${rndIdx}`, cfg, () => {
+      itCfg(`random ${rndIdx}`, cfg, () => {
         let id = 0;
 
         const usedResources = [];
@@ -2355,12 +2405,21 @@ function cancellableDelay(ms, cleanupFns) {
 }
 
 // Allows us to use old versions of vitest for older versions of node
-function it(name, ...rest) {
+function itCfg(name, ...rest) {
   if (vitestVersion.startsWith('0.')) {
     if (typeof rest[1] === 'function') {
-      return vitestIt(name, rest[1], rest[0]);
+      return it(name, rest[1], rest[0]);
     }
-    return vitestIt(name, ...rest);
+    return it(name, ...rest);
   }
-  return vitestIt(name, ...rest);
+  return it(name, ...rest);
+}
+
+function deferred() {
+  const obj = {};
+  obj.promise = new Promise((_resolve, _reject) => {
+    obj.resolve = _resolve;
+    obj.reject = _reject;
+  });
+  return obj;
 }
