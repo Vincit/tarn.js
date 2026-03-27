@@ -6,8 +6,10 @@
   "types": "dist/tarn.d.ts",
   "license": "MIT",
   "scripts": {
+    "pretest": "npm run build",
     "test": "vitest run",
     "test-bail": "vitest run --bail 1",
+    "prebuild": "rm -rf dist",
     "build": "tsc",
     "clean": "rm -rf dist",
     "prepublishOnly": "tsc",
@@ -48,7 +50,7 @@
     ]
   },
   "devDependencies": {
-    "@types/node": "^20",
+    "@types/node": "^14",
     "@typescript-eslint/eslint-plugin": "^2.21.0",
     "@typescript-eslint/parser": "^2.21.0",
     "bluebird": "^3.7.2",
@@ -58,7 +60,7 @@
     "husky": "^1.3.1",
     "lint-staged": "^9.5.0",
     "prettier": "^1.19.1",
-    "typescript": "^5",
+    "typescript": "^5.9.3",
     "vitest": "^4.1.2"
   }
 }

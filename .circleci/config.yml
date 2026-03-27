@@ -2,6 +2,10 @@ version: 2.1
 
 commands:
   test-nodejs:
+    parameters:
+      vitest-version:
+        type: string
+        default: ''
     steps:
       - run:
           name: Versions
@@ -10,6 +14,12 @@ commands:
       - run:
           name: Install dependencies
           command: npm install
+      - when:
+          condition: << parameters.vitest-version >>
+          steps:
+            - run:
+                name: Install vitest << parameters.vitest-version >>
+                command: npm install vitest@<< parameters.vitest-version >>
       - run:
           name: Build
           command: npm run build
@@ -20,14 +30,15 @@ commands:
           name: Test
           command: npm run test
 jobs:
-  node-v8:
+  node-v14:
+    docker:
+      - image: node:14
+    steps:
+      - test-nodejs:
+          vitest-version: '^0.34'
+  node-v20:
     docker:
       - image: node:20
-    steps:
-      - test-nodejs
-  node-v22:
-    docker:
-      - image: node:22
     steps:
       - test-nodejs
   node-v24:
@@ -40,6 +51,6 @@ workflows:
   version: 2
   node-multi-build:
     jobs:
+      - node-v14
       - node-v20
-      - node-v22
       - node-v24

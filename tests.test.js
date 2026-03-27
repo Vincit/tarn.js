@@ -1,20 +1,7 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { version as vitestVersion } from 'vitest/package.json';
+import { describe, it as vitestIt, expect, beforeEach, afterEach } from 'vitest';
 import Promise from 'bluebird';
-import { Pool, TimeoutError } from './src/tarn';
-
-function cancellableDelay(ms, cleanupFns) {
-  let timer;
-  let resolvePromise;
-  const promise = new Promise(resolve => {
-    resolvePromise = resolve;
-    timer = setTimeout(resolve, ms);
-  });
-  cleanupFns.push(() => {
-    clearTimeout(timer);
-    resolvePromise();
-  });
-  return promise;
-}
+import { Pool, TimeoutError } from '.';
 
 describe('Tarn', () => {
   let pool = null;
@@ -345,7 +332,7 @@ describe('Tarn', () => {
 
       pool = new Pool({
         create(callback) {
-          let a = createCalled++;
+          const a = createCalled++;
 
           setTimeout(() => {
             callback(null, { a });
@@ -564,7 +551,11 @@ describe('Tarn', () => {
         expect(pool.numPendingAcquires()).to.equal(0);
         expect(pool.numPendingCreates()).to.equal(0);
 
-        let newAcquires = [pool.acquire().promise, pool.acquire().promise, pool.acquire().promise];
+        const newAcquires = [
+          pool.acquire().promise,
+          pool.acquire().promise,
+          pool.acquire().promise
+        ];
 
         expect(pool.numPendingAcquires()).to.equal(3);
 
@@ -610,7 +601,7 @@ describe('Tarn', () => {
         max: 4
       });
 
-      let acquire = pool.acquire();
+      const acquire = pool.acquire();
       expect(pool.numPendingCreates()).to.equal(1);
 
       setTimeout(() => {
@@ -821,7 +812,7 @@ describe('Tarn', () => {
       acquireTimeoutMillis: 15000
     });
 
-    let pending = pool.acquire();
+    const pending = pool.acquire();
 
     return Promise.delay(20)
       .then(() => {
@@ -911,8 +902,8 @@ describe('Tarn', () => {
     let destroyCalled = 0;
     let validateCalled = 0;
     let validationFails = 0;
-    let validationMaxFailures = 10;
     let completedAcquires = 0;
+    const validationMaxFailures = 10;
 
     pool = new Pool({
       create(callback) {
@@ -1037,7 +1028,7 @@ describe('Tarn', () => {
 
       pool = new Pool({
         create(callback) {
-          let a = createCalled++;
+          const a = createCalled++;
 
           setTimeout(() => {
             callback(null, { a: a });
@@ -1090,7 +1081,7 @@ describe('Tarn', () => {
 
       pool = new Pool({
         create(callback) {
-          let a = createCalled++;
+          const a = createCalled++;
 
           setTimeout(() => {
             callback(null, { a: a });
@@ -1103,7 +1094,7 @@ describe('Tarn', () => {
 
       return Promise.all([pool.acquire().promise, pool.acquire().promise])
         .then(res => {
-          let pendingAcquire = pool.acquire();
+          const pendingAcquire = pool.acquire();
 
           expect(createCalled).to.equal(2);
           expect(pool.numUsed()).to.equal(2);
@@ -1130,7 +1121,7 @@ describe('Tarn', () => {
 
       pool = new Pool({
         create(callback) {
-          let a = createCalled++;
+          const a = createCalled++;
 
           setTimeout(() => {
             callback(null, { a: a });
@@ -1342,7 +1333,7 @@ describe('Tarn', () => {
     });
 
     it('should not hang if the async destroy is too slow', () => {
-      let destroyTimeoutMillis = 100;
+      const destroyTimeoutMillis = 100;
       let destroyerErrorThrown = false;
       pool = new Pool({
         create() {
@@ -1425,11 +1416,11 @@ describe('Tarn', () => {
   describe('acquireTimeout', () => {
     it('should fail to acquire opt.max + 1 resources after acquireTimeoutMillis', () => {
       let createCalled = 0;
-      let acquireTimeoutMillis = 100;
+      const acquireTimeoutMillis = 100;
 
       pool = new Pool({
         create(callback) {
-          let a = createCalled++;
+          const a = createCalled++;
 
           setTimeout(() => {
             callback(null, { a: a });
@@ -1441,7 +1432,7 @@ describe('Tarn', () => {
         acquireTimeoutMillis: acquireTimeoutMillis
       });
 
-      let now = Date.now();
+      const now = Date.now();
 
       return Promise.all([
         pool.acquire().promise,
@@ -1455,7 +1446,7 @@ describe('Tarn', () => {
           throw new Error('should not get here');
         })
         .catch(err => {
-          let duration = Date.now() - now;
+          const duration = Date.now() - now;
 
           expect(err).to.be.an.instanceof(TimeoutError);
 
@@ -1472,7 +1463,7 @@ describe('Tarn', () => {
 
     it('should recover after acquireTimeoutMillis if the create function returns an error', () => {
       let createCalled = 0;
-      let acquireTimeoutMillis = 100;
+      const acquireTimeoutMillis = 100;
 
       pool = new Pool({
         create(callback) {
@@ -1489,7 +1480,7 @@ describe('Tarn', () => {
         createRetryIntervalMillis: 200
       });
 
-      let now = Date.now();
+      const now = Date.now();
 
       return pool
         .acquire()
@@ -1497,7 +1488,7 @@ describe('Tarn', () => {
           throw new Error('should not get here');
         })
         .catch(err => {
-          let duration = Date.now() - now;
+          const duration = Date.now() - now;
 
           expect(err).to.be.an.instanceof(TimeoutError);
           expect(err.message).to.equal('this is the error from create');
@@ -1515,7 +1506,7 @@ describe('Tarn', () => {
 
     it('should recover after acquireTimeoutMillis if the create function throws an error', () => {
       let createCalled = 0;
-      let acquireTimeoutMillis = 100;
+      const acquireTimeoutMillis = 100;
 
       pool = new Pool({
         create() {
@@ -1528,7 +1519,7 @@ describe('Tarn', () => {
         acquireTimeoutMillis: acquireTimeoutMillis
       });
 
-      let now = Date.now();
+      const now = Date.now();
 
       return pool
         .acquire()
@@ -1536,7 +1527,7 @@ describe('Tarn', () => {
           throw new Error('should not get here');
         })
         .catch(err => {
-          let duration = Date.now() - now;
+          const duration = Date.now() - now;
 
           expect(err).to.be.an.instanceof(TimeoutError);
           expect(err.message).to.equal('this is the error from create');
@@ -1556,7 +1547,7 @@ describe('Tarn', () => {
   describe('propagateCreateError', () => {
     it('should immediately reject the first acquire in the queue if create throws an error', async () => {
       let createCalled = 0;
-      let acquireTimeoutMillis = 1000;
+      const acquireTimeoutMillis = 1000;
 
       pool = new Pool({
         create(callback) {
@@ -1575,12 +1566,12 @@ describe('Tarn', () => {
         propagateCreateError: true
       });
 
-      let now = Date.now();
+      const now = Date.now();
 
       const res1 = await Promise.resolve(pool.acquire().promise).reflect();
       const res2 = await Promise.resolve(pool.acquire().promise).reflect();
 
-      let duration = Date.now() - now;
+      const duration = Date.now() - now;
 
       expect(res1.isRejected()).to.equal(true);
       expect(res1.reason()).not.to.be.an.instanceof(TimeoutError);
@@ -1604,11 +1595,11 @@ describe('Tarn', () => {
     it('should remove idle resources after idleTimeoutMillis', async () => {
       let createCalled = 0;
       let destroyCalled = 0;
-      let destroyed = [];
+      const destroyed = [];
 
       pool = new Pool({
         create(callback) {
-          let a = createCalled++;
+          const a = createCalled++;
 
           setTimeout(() => {
             callback(null, { a: a });
@@ -1660,11 +1651,11 @@ describe('Tarn', () => {
     it('should only run the reaping loop when there is something to reap', async () => {
       let createCalled = 0;
       let destroyCalled = 0;
-      let destroyed = [];
+      const destroyed = [];
 
       pool = new Pool({
         create(callback) {
-          let a = createCalled++;
+          const a = createCalled++;
 
           setTimeout(() => {
             callback(null, { a: a });
@@ -1704,11 +1695,11 @@ describe('Tarn', () => {
     it('should always keep opt.min resources', async () => {
       let createCalled = 0;
       let destroyCalled = 0;
-      let destroyed = [];
+      const destroyed = [];
 
       pool = new Pool({
         create(callback) {
-          let a = createCalled++;
+          const a = createCalled++;
 
           setTimeout(() => {
             callback(null, { a: a });
@@ -1762,12 +1753,12 @@ describe('Tarn', () => {
     it('should release unused resources after idleTimeoutMillis when resources are repeatedly released and freed', async () => {
       let createCalled = 0;
       let destroyCalled = 0;
-      let destroyed = [];
+      const destroyed = [];
       let finished = false;
 
       pool = new Pool({
         create(callback) {
-          let a = createCalled++;
+          const a = createCalled++;
 
           setTimeout(() => {
             callback(null, { a: a });
@@ -2078,7 +2069,7 @@ describe('Tarn', () => {
 
     describe('running / removing listeners', () => {
       let listenerCallCount = 0;
-      let removableListener = () => {
+      const removableListener = () => {
         listenerCallCount++;
         throw new Error();
       };
@@ -2229,7 +2220,7 @@ describe('Tarn', () => {
   });
 
   describe('randomized tests', () => {
-    const NUM_RANDOM_TESTS = 1;
+    const NUM_RANDOM_TESTS = 2;
 
     for (let rndIdx = 1; rndIdx < NUM_RANDOM_TESTS + 1; ++rndIdx) {
       const maxResources = 10 + randInt(90);
@@ -2347,4 +2338,29 @@ function findBy(arr, key, value) {
   }
 
   return null;
+}
+
+function cancellableDelay(ms, cleanupFns) {
+  let timer;
+  let resolvePromise;
+  const promise = new Promise(resolve => {
+    resolvePromise = resolve;
+    timer = setTimeout(resolve, ms);
+  });
+  cleanupFns.push(() => {
+    clearTimeout(timer);
+    resolvePromise();
+  });
+  return promise;
+}
+
+// Allows us to use old versions of vitest for older versions of node
+function it(name, ...rest) {
+  if (vitestVersion.startsWith('0.')) {
+    if (typeof rest[1] === 'function') {
+      return vitestIt(name, rest[1], rest[0]);
+    }
+    return vitestIt(name, ...rest);
+  }
+  return vitestIt(name, ...rest);
 }
