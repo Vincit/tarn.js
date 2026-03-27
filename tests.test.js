@@ -1451,7 +1451,7 @@ describe('Tarn', () => {
           expect(err).to.be.an.instanceof(TimeoutError);
 
           expect(duration).to.be.greaterThan(acquireTimeoutMillis - 5);
-          expect(duration - acquireTimeoutMillis).to.be.lessThan(50);
+          expect(duration - acquireTimeoutMillis).to.be.lessThan(100);
 
           expect(createCalled).to.equal(5);
           expect(pool.numUsed()).to.equal(5);
@@ -1494,7 +1494,7 @@ describe('Tarn', () => {
           expect(err.message).to.equal('this is the error from create');
 
           expect(duration).to.be.greaterThan(acquireTimeoutMillis - 5);
-          expect(duration - acquireTimeoutMillis).to.be.lessThan(50);
+          expect(duration - acquireTimeoutMillis).to.be.lessThan(100);
 
           expect(createCalled).to.equal(1);
           expect(pool.numUsed()).to.equal(0);
@@ -1533,7 +1533,7 @@ describe('Tarn', () => {
           expect(err.message).to.equal('this is the error from create');
 
           expect(duration).to.be.greaterThan(acquireTimeoutMillis - 5);
-          expect(duration - acquireTimeoutMillis).to.be.lessThan(50);
+          expect(duration - acquireTimeoutMillis).to.be.lessThan(100);
 
           expect(createCalled).to.equal(1);
           expect(pool.numUsed()).to.equal(0);

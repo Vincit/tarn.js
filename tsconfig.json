@@ -4,7 +4,7 @@
     "outDir": "./dist",
     "strict": true,
     "esModuleInterop": true,
-    "target": "es2015",
+    "target": "es2017",
     "noImplicitAny": true,
     "declaration": true,
     "module": "commonjs",
