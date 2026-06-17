@@ -1,3 +1,5 @@
+# HEY VINCIT PEOPLE! STOP ARCHIVING THIS REPO! IT HAS 6 MILLION NPM DOWNLOADS PER WEEK! THOUSANDS OF PROJECTS DEPEND ON IT!
+
 [![Build Status](https://travis-ci.org/Vincit/tarn.js.svg?branch=master)](https://travis-ci.org/Vincit/tarn.js)
 
 ## Why yet another resource pool?
