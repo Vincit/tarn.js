@@ -1,3 +1,4 @@
+import { PoolError } from './errors';
 import { PendingOperation } from './PendingOperation';
 import { Resource } from './Resource';
 import { checkOptionalTime, delay, duration, now, reflect, tryPromise } from './utils';
@@ -49,57 +50,57 @@ export class Pool<T> {
     opt = opt || {};
 
     if (!opt.create) {
-      throw new Error('Tarn: opt.create function most be provided');
+      throw new PoolError('Tarn: opt.create function most be provided');
     }
 
     if (!opt.destroy) {
-      throw new Error('Tarn: opt.destroy function most be provided');
+      throw new PoolError('Tarn: opt.destroy function most be provided');
     }
 
     if (typeof opt.min !== 'number' || opt.min < 0 || opt.min !== Math.round(opt.min)) {
-      throw new Error('Tarn: opt.min must be an integer >= 0');
+      throw new PoolError('Tarn: opt.min must be an integer >= 0');
     }
 
     if (typeof opt.max !== 'number' || opt.max <= 0 || opt.max !== Math.round(opt.max)) {
-      throw new Error('Tarn: opt.max must be an integer > 0');
+      throw new PoolError('Tarn: opt.max must be an integer > 0');
     }
 
     if (opt.min > opt.max) {
-      throw new Error('Tarn: opt.max is smaller than opt.min');
+      throw new PoolError('Tarn: opt.max is smaller than opt.min');
     }
 
     if (!checkOptionalTime(opt.acquireTimeoutMillis)) {
-      throw new Error(
+      throw new PoolError(
         'Tarn: invalid opt.acquireTimeoutMillis ' + JSON.stringify(opt.acquireTimeoutMillis)
       );
     }
 
     if (!checkOptionalTime(opt.createTimeoutMillis)) {
-      throw new Error(
+      throw new PoolError(
         'Tarn: invalid opt.createTimeoutMillis ' + JSON.stringify(opt.createTimeoutMillis)
       );
     }
 
     if (!checkOptionalTime(opt.destroyTimeoutMillis)) {
-      throw new Error(
+      throw new PoolError(
         'Tarn: invalid opt.destroyTimeoutMillis ' + JSON.stringify(opt.destroyTimeoutMillis)
       );
     }
 
     if (!checkOptionalTime(opt.idleTimeoutMillis)) {
-      throw new Error(
+      throw new PoolError(
         'Tarn: invalid opt.idleTimeoutMillis ' + JSON.stringify(opt.idleTimeoutMillis)
       );
     }
 
     if (!checkOptionalTime(opt.reapIntervalMillis)) {
-      throw new Error(
+      throw new PoolError(
         'Tarn: invalid opt.reapIntervalMillis ' + JSON.stringify(opt.reapIntervalMillis)
       );
     }
 
     if (!checkOptionalTime(opt.createRetryIntervalMillis)) {
-      throw new Error(
+      throw new PoolError(
         'Tarn: invalid opt.createRetryIntervalMillis ' +
           JSON.stringify(opt.createRetryIntervalMillis)
       );
@@ -123,7 +124,7 @@ export class Pool<T> {
 
     for (const key of Object.keys(opt)) {
       if (!allowedKeys[key]) {
-        throw new Error(`Tarn: unsupported option opt.${key}`);
+        throw new PoolError(`Tarn: unsupported option opt.${key}`);
       }
     }
 
@@ -398,7 +399,7 @@ export class Pool<T> {
       if (free === undefined || pendingAcquire === undefined) {
         const errMessage = 'this.free was empty while trying to acquire resource';
         this.log(`Tarn: ${errMessage}`, 'warn');
-        throw new Error(`Internal error, should never happen. ${errMessage}`);
+        throw new PoolError(`Internal error, should never happen. ${errMessage}`);
       }
 
       // Make sure that pendingAcquire that is being validated is not lost and
