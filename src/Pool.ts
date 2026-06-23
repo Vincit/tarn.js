@@ -16,7 +16,7 @@ export interface PoolOptions<T> {
   createRetryIntervalMillis?: number;
   reapIntervalMillis?: number;
   log?: (msg: string) => any;
-  validate?: (resource: T) => boolean;
+  validate?: (resource: T) => Promise<boolean> | boolean;
   propagateCreateError?: boolean;
 }
 
@@ -41,7 +41,7 @@ export class Pool<T> {
   protected log: (msg: string, level: 'warn') => any;
   protected creator: CallbackOrPromise<T>;
   protected destroyer: (resource: T) => any;
-  protected validate: (resource: T) => boolean;
+  protected validate: (resource: T) => Promise<boolean> | boolean;
   protected eventId: number;
   protected emitter = new EventEmitter();
 
@@ -474,13 +474,10 @@ export class Pool<T> {
     return this.free.length > 0 && this.pendingAcquires.length > 0;
   }
 
-  _validateResource(resource: T) {
-    try {
-      return Promise.resolve(this.validate(resource));
-    } catch (err) {
-      // prevent leaking of sync exception
-      return Promise.reject(err);
-    }
+  async _validateResource(resource: T) {
+    const result = await this.validate(resource);
+
+    return result;
   }
 
   _shouldCreateMoreResources() {
