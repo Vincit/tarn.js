@@ -164,6 +164,14 @@ export class Pool<T> {
     this.eventId = 1;
   }
 
+  numMax() {
+    return this.max;
+  }
+
+  numMin() {
+    return this.min;
+  }
+
   numUsed() {
     return this.used.length;
   }
@@ -182,6 +190,15 @@ export class Pool<T> {
 
   numPendingCreates() {
     return this.pendingCreates.length;
+  }
+
+  numRemainingCapacity() {
+    const demand =
+      this.numUsed() +
+      this.numPendingCreates() +
+      this.numPendingValidations() +
+      this.numPendingAcquires();
+    return Math.max(0, this.numMax() - demand);
   }
 
   acquire() {

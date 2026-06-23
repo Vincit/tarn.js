@@ -398,10 +398,13 @@ describe('Tarn', () => {
         pool.acquire().promise
       ]);
 
+      expect(pool.numMin()).to.equal(2);
+      expect(pool.numMax()).to.equal(4);
       expect(pool.numUsed()).to.equal(0);
       expect(pool.numFree()).to.equal(0);
       expect(pool.numPendingAcquires()).to.equal(4);
       expect(pool.numPendingCreates()).to.equal(4);
+      expect(pool.numRemainingCapacity()).to.equal(0);
 
       return acquirePromise.then(res => {
         expect(sortBy(res, 'a')).to.eql([{ a: 0 }, { a: 1 }, { a: 2 }, { a: 3 }]);
@@ -409,10 +412,13 @@ describe('Tarn', () => {
         expect(createCalled).to.equal(4);
         expect(destroyCalled).to.equal(0);
 
+        expect(pool.numMin()).to.equal(2);
+        expect(pool.numMax()).to.equal(4);
         expect(pool.numUsed()).to.equal(4);
         expect(pool.numFree()).to.equal(0);
         expect(pool.numPendingAcquires()).to.equal(0);
         expect(pool.numPendingCreates()).to.equal(0);
+        expect(pool.numRemainingCapacity()).to.equal(0);
       });
     });
 
@@ -438,10 +444,13 @@ describe('Tarn', () => {
         pool.acquire().promise
       ]);
 
+      expect(pool.numMin()).to.equal(2);
+      expect(pool.numMax()).to.equal(4);
       expect(pool.numUsed()).to.equal(0);
       expect(pool.numFree()).to.equal(0);
       expect(pool.numPendingAcquires()).to.equal(4);
       expect(pool.numPendingCreates()).to.equal(4);
+      expect(pool.numRemainingCapacity()).to.equal(0);
 
       return acquirePromise.then(res => {
         expect(sortBy(res, 'a')).to.eql([{ a: 0 }, { a: 1 }, { a: 2 }, { a: 3 }]);
@@ -449,10 +458,13 @@ describe('Tarn', () => {
         expect(createCalled).to.equal(4);
         expect(destroyCalled).to.equal(0);
 
+        expect(pool.numMin()).to.equal(2);
+        expect(pool.numMax()).to.equal(4);
         expect(pool.numUsed()).to.equal(4);
         expect(pool.numFree()).to.equal(0);
         expect(pool.numPendingAcquires()).to.equal(0);
         expect(pool.numPendingCreates()).to.equal(0);
+        expect(pool.numRemainingCapacity()).to.equal(0);
       });
     });
 
@@ -482,10 +494,13 @@ describe('Tarn', () => {
         expect(createCalled).to.equal(4);
         expect(destroyCalled).to.equal(0);
 
+        expect(pool.numMin()).to.equal(2);
+        expect(pool.numMax()).to.equal(4);
         expect(pool.numUsed()).to.equal(4);
         expect(pool.numFree()).to.equal(0);
         expect(pool.numPendingAcquires()).to.equal(0);
         expect(pool.numPendingCreates()).to.equal(0);
+        expect(pool.numRemainingCapacity()).to.equal(0);
       });
     });
 
@@ -517,10 +532,13 @@ describe('Tarn', () => {
         expect(createCalled).to.equal(2);
         expect(destroyCalled).to.equal(0);
 
+        expect(pool.numMin()).to.equal(2);
+        expect(pool.numMax()).to.equal(4);
         expect(pool.numUsed()).to.equal(1);
         expect(pool.numFree()).to.equal(0);
         expect(pool.numPendingAcquires()).to.equal(0);
         expect(pool.numPendingCreates()).to.equal(0);
+        expect(pool.numRemainingCapacity()).to.equal(3);
       });
     });
 
@@ -554,11 +572,13 @@ describe('Tarn', () => {
           expect(res).to.eql({ a: 2 });
 
           expect(createCalled).to.equal(2);
-
+          expect(pool.numMin()).to.equal(2);
+          expect(pool.numMax()).to.equal(4);
           expect(pool.numUsed()).to.equal(1);
           expect(pool.numFree()).to.equal(0);
           expect(pool.numPendingAcquires()).to.equal(0);
           expect(pool.numPendingCreates()).to.equal(0);
+          expect(pool.numRemainingCapacity()).to.equal(3);
 
           // Wait until the first resource has resolved
           return new Promise(resolve => setTimeout(resolve, 200));
@@ -592,10 +612,13 @@ describe('Tarn', () => {
         expect(sortBy(res, 'a')).to.eql([{ a: 0 }, { a: 1 }, { a: 2 }, { a: 3 }, { a: 4 }]);
 
         expect(createCalled).to.equal(5);
+        expect(pool.numMin()).to.equal(0);
+        expect(pool.numMax()).to.equal(5);
         expect(pool.numUsed()).to.equal(5);
         expect(pool.numFree()).to.equal(0);
         expect(pool.numPendingAcquires()).to.equal(0);
         expect(pool.numPendingCreates()).to.equal(0);
+        expect(pool.numRemainingCapacity()).to.equal(0);
 
         let newAcquires = [pool.acquire().promise, pool.acquire().promise, pool.acquire().promise];
 
@@ -616,10 +639,13 @@ describe('Tarn', () => {
           expect(newRes[2] === res[4]).to.equal(true);
 
           expect(createCalled).to.equal(5);
+          expect(pool.numMin()).to.equal(0);
+          expect(pool.numMax()).to.equal(5);
           expect(pool.numUsed()).to.equal(5);
           expect(pool.numFree()).to.equal(0);
           expect(pool.numPendingAcquires()).to.equal(0);
           expect(pool.numPendingCreates()).to.equal(0);
+          expect(pool.numRemainingCapacity()).to.equal(0);
         });
       });
     });
@@ -659,18 +685,24 @@ describe('Tarn', () => {
 
           expect(createCalled).to.equal(1);
 
+          expect(pool.numMin()).to.equal(2);
+          expect(pool.numMax()).to.equal(4);
           expect(pool.numUsed()).to.equal(0);
           expect(pool.numFree()).to.equal(0);
           expect(pool.numPendingAcquires()).to.equal(0);
           expect(pool.numPendingCreates()).to.equal(1);
+          expect(pool.numRemainingCapacity()).to.equal(3);
 
           return Promise.delay(100).then(() => {
             expect(createCalled).to.equal(1);
             expect(destroyCalled).to.equal(0);
 
+            expect(pool.numMin()).to.equal(2);
+            expect(pool.numMax()).to.equal(4);
             expect(pool.numUsed()).to.equal(0);
             expect(pool.numFree()).to.equal(1);
             expect(pool.numPendingAcquires()).to.equal(0);
+            expect(pool.numRemainingCapacity()).to.equal(4);
 
             done();
           });
@@ -707,10 +739,13 @@ describe('Tarn', () => {
 
           expect(createCalled).to.equal(2);
           expect(destroyCalled).to.equal(0);
+          expect(pool.numMin()).to.equal(0);
+          expect(pool.numMax()).to.equal(2);
           expect(pool.numUsed()).to.equal(2);
           expect(pool.numFree()).to.equal(0);
           expect(pool.numPendingAcquires()).to.equal(0);
           expect(pool.numPendingCreates()).to.equal(0);
+          expect(pool.numRemainingCapacity()).to.equal(0);
 
           pool.release(res[0]);
           pool.release(res[1]);
@@ -726,10 +761,13 @@ describe('Tarn', () => {
           expect(createCalled).to.equal(3);
           expect(destroyCalled).to.equal(1);
           expect(destroyed).to.eql({ a: 0, n: 1 });
+          expect(pool.numMin()).to.equal(0);
+          expect(pool.numMax()).to.equal(2);
           expect(pool.numUsed()).to.equal(2);
           expect(pool.numFree()).to.equal(0);
           expect(pool.numPendingAcquires()).to.equal(0);
           expect(pool.numPendingCreates()).to.equal(0);
+          expect(pool.numRemainingCapacity()).to.equal(0);
         });
 
       function acquire() {
@@ -770,8 +808,11 @@ describe('Tarn', () => {
       .then(() => {
         // a resource should have been created and it should have been added to the free pool
         expect(createCalled).to.be(1);
+        expect(pool.numMin()).to.equal(0);
+        expect(pool.numMax()).to.equal(2);
         expect(pool.numUsed()).to.be(0);
         expect(pool.numFree()).to.be(1);
+        expect(pool.numRemainingCapacity()).to.equal(2);
       });
   });
 
@@ -1088,19 +1129,25 @@ describe('Tarn', () => {
           expect(sortBy(res, 'a')).to.eql([{ a: 0 }, { a: 1 }, { a: 2 }]);
 
           expect(createCalled).to.equal(3);
+          expect(pool.numMin()).to.equal(2);
+          expect(pool.numMax()).to.equal(4);
           expect(pool.numUsed()).to.equal(3);
           expect(pool.numFree()).to.equal(0);
           expect(pool.numPendingAcquires()).to.equal(0);
           expect(pool.numPendingCreates()).to.equal(0);
+          expect(pool.numRemainingCapacity()).to.equal(1);
 
           pool.release(res[2]);
           pool.release(res[1]);
 
           expect(createCalled).to.equal(3);
+          expect(pool.numMin()).to.equal(2);
+          expect(pool.numMax()).to.equal(4);
           expect(pool.numUsed()).to.equal(1);
           expect(pool.numFree()).to.equal(2);
           expect(pool.numPendingAcquires()).to.equal(0);
           expect(pool.numPendingCreates()).to.equal(0);
+          expect(pool.numRemainingCapacity()).to.equal(3);
 
           return Promise.all([
             pool.acquire().promise,
@@ -1112,10 +1159,13 @@ describe('Tarn', () => {
           expect(res).to.eql([{ a: 1 }, { a: 2 }, { a: 3 }]);
 
           expect(createCalled).to.equal(4);
+          expect(pool.numMin()).to.equal(2);
+          expect(pool.numMax()).to.equal(4);
           expect(pool.numUsed()).to.equal(4);
           expect(pool.numFree()).to.equal(0);
           expect(pool.numPendingAcquires()).to.equal(0);
           expect(pool.numPendingCreates()).to.equal(0);
+          expect(pool.numRemainingCapacity()).to.equal(0);
         });
     });
 
@@ -1141,10 +1191,13 @@ describe('Tarn', () => {
           let pendingAcquire = pool.acquire();
 
           expect(createCalled).to.equal(2);
+          expect(pool.numMin()).to.equal(0);
+          expect(pool.numMax()).to.equal(2);
           expect(pool.numUsed()).to.equal(2);
           expect(pool.numFree()).to.equal(0);
           expect(pool.numPendingAcquires()).to.equal(1);
           expect(pool.numPendingCreates()).to.equal(0);
+          expect(pool.numRemainingCapacity()).to.equal(0);
 
           setTimeout(() => {
             releaseCalled = true;
@@ -1188,10 +1241,13 @@ describe('Tarn', () => {
 
         expect(createCalled).to.equal(2);
         expect(destroyCalled).to.equal(0);
+        expect(pool.numMin()).to.equal(0);
+        expect(pool.numMax()).to.equal(2);
         expect(pool.numUsed()).to.equal(2);
         expect(pool.numFree()).to.equal(0);
         expect(pool.numPendingAcquires()).to.equal(0);
         expect(pool.numPendingCreates()).to.equal(0);
+        expect(pool.numRemainingCapacity()).to.equal(0);
       });
     });
   });
@@ -1248,10 +1304,13 @@ describe('Tarn', () => {
           expect(createCalled).to.equal(3);
           expect(destroyCalled).to.equal(3);
 
+          expect(pool.numMin()).to.equal(0);
+          expect(pool.numMax()).to.equal(10);
           expect(pool.numUsed()).to.equal(0);
           expect(pool.numFree()).to.equal(0);
           expect(pool.numPendingAcquires()).to.equal(0);
           expect(pool.numPendingCreates()).to.equal(0);
+          expect(pool.numRemainingCapacity()).to.equal(10);
         });
     });
 
@@ -1307,10 +1366,13 @@ describe('Tarn', () => {
           expect(createCalled).to.equal(3);
           expect(destroyCalled).to.equal(3);
 
+          expect(pool.numMin()).to.equal(0);
+          expect(pool.numMax()).to.equal(10);
           expect(pool.numUsed()).to.equal(0);
           expect(pool.numFree()).to.equal(0);
           expect(pool.numPendingAcquires()).to.equal(0);
           expect(pool.numPendingCreates()).to.equal(0);
+          expect(pool.numRemainingCapacity()).to.equal(10);
         });
     });
 
@@ -1498,10 +1560,13 @@ describe('Tarn', () => {
           expect(duration - acquireTimeoutMillis).to.be.lessThan(50);
 
           expect(createCalled).to.equal(5);
+          expect(pool.numMin()).to.equal(2);
+          expect(pool.numMax()).to.equal(5);
           expect(pool.numUsed()).to.equal(5);
           expect(pool.numFree()).to.equal(0);
           expect(pool.numPendingAcquires()).to.equal(0);
           expect(pool.numPendingCreates()).to.equal(0);
+          expect(pool.numRemainingCapacity()).to.equal(0);
 
           done();
         })
@@ -1544,10 +1609,13 @@ describe('Tarn', () => {
           expect(duration - acquireTimeoutMillis).to.be.lessThan(50);
 
           expect(createCalled).to.equal(1);
+          expect(pool.numMin()).to.equal(2);
+          expect(pool.numMax()).to.equal(4);
           expect(pool.numUsed()).to.equal(0);
           expect(pool.numFree()).to.equal(0);
           expect(pool.numPendingAcquires()).to.equal(0);
           expect(pool.numPendingCreates()).to.equal(0);
+          expect(pool.numRemainingCapacity()).to.equal(4);
 
           done();
         })
@@ -1586,10 +1654,13 @@ describe('Tarn', () => {
           expect(duration - acquireTimeoutMillis).to.be.lessThan(50);
 
           expect(createCalled).to.equal(1);
+          expect(pool.numMin()).to.equal(2);
+          expect(pool.numMax()).to.equal(4);
           expect(pool.numUsed()).to.equal(0);
           expect(pool.numFree()).to.equal(0);
           expect(pool.numPendingAcquires()).to.equal(0);
           expect(pool.numPendingCreates()).to.equal(0);
+          expect(pool.numRemainingCapacity()).to.equal(4);
 
           done();
         })
@@ -1642,10 +1713,13 @@ describe('Tarn', () => {
           expect(duration).to.be.lessThan(acquireTimeoutMillis - 500);
 
           expect(createCalled).to.equal(2);
+          expect(pool.numMin()).to.equal(2);
+          expect(pool.numMax()).to.equal(5);
           expect(pool.numUsed()).to.equal(1);
           expect(pool.numFree()).to.equal(0);
           expect(pool.numPendingAcquires()).to.equal(0);
           expect(pool.numPendingCreates()).to.equal(0);
+          expect(pool.numRemainingCapacity()).to.equal(4);
 
           done();
         })
@@ -1681,22 +1755,31 @@ describe('Tarn', () => {
         .then(res => {
           expect(sortBy(res, 'a')).to.eql([{ a: 0 }, { a: 1 }, { a: 2 }]);
 
+          expect(pool.numMin()).to.equal(0);
+          expect(pool.numMax()).to.equal(4);
           expect(pool.numUsed()).to.equal(3);
           expect(pool.numFree()).to.equal(0);
+          expect(pool.numRemainingCapacity()).to.equal(1);
 
           pool.release(res[0]);
           pool.release(res[1]);
 
           expect(destroyCalled).to.equal(0);
+          expect(pool.numMin()).to.equal(0);
+          expect(pool.numMax()).to.equal(4);
           expect(pool.numUsed()).to.equal(1);
           expect(pool.numFree()).to.equal(2);
+          expect(pool.numRemainingCapacity()).to.equal(3);
 
           return Promise.delay(50);
         })
         .then(() => {
           expect(destroyCalled).to.equal(0);
+          expect(pool.numMin()).to.equal(0);
+          expect(pool.numMax()).to.equal(4);
           expect(pool.numUsed()).to.equal(1);
           expect(pool.numFree()).to.equal(2);
+          expect(pool.numRemainingCapacity()).to.equal(3);
 
           return Promise.delay(65);
         })
@@ -1704,8 +1787,11 @@ describe('Tarn', () => {
           expect(destroyed).to.eql([{ a: 0 }, { a: 1 }]);
 
           expect(destroyCalled).to.equal(2);
+          expect(pool.numMin()).to.equal(0);
+          expect(pool.numMax()).to.equal(4);
           expect(pool.numUsed()).to.equal(1);
           expect(pool.numFree()).to.equal(0);
+          expect(pool.numRemainingCapacity()).to.equal(3);
 
           done();
         })
@@ -1796,23 +1882,32 @@ describe('Tarn', () => {
         .then(res => {
           expect(sortBy(res, 'a')).to.eql([{ a: 0 }, { a: 1 }, { a: 2 }, { a: 3 }]);
 
+          expect(pool.numMin()).to.equal(2);
+          expect(pool.numMax()).to.equal(4);
           expect(pool.numUsed()).to.equal(4);
           expect(pool.numFree()).to.equal(0);
+          expect(pool.numRemainingCapacity()).to.equal(0);
 
           pool.release(findBy(res, 'a', 0));
           pool.release(findBy(res, 'a', 1));
           pool.release(findBy(res, 'a', 2));
 
           expect(destroyCalled).to.equal(0);
+          expect(pool.numMin()).to.equal(2);
+          expect(pool.numMax()).to.equal(4);
           expect(pool.numUsed()).to.equal(1);
           expect(pool.numFree()).to.equal(3);
+          expect(pool.numRemainingCapacity()).to.equal(3);
 
           return Promise.delay(50);
         })
         .then(() => {
           expect(destroyCalled).to.equal(0);
+          expect(pool.numMin()).to.equal(2);
+          expect(pool.numMax()).to.equal(4);
           expect(pool.numUsed()).to.equal(1);
           expect(pool.numFree()).to.equal(3);
+          expect(pool.numRemainingCapacity()).to.equal(3);
 
           return Promise.delay(60);
         })
@@ -1820,8 +1915,11 @@ describe('Tarn', () => {
           expect(sortBy(destroyed, 'a')).to.eql([{ a: 0 }, { a: 1 }]);
 
           expect(destroyCalled).to.equal(2);
+          expect(pool.numMin()).to.equal(2);
+          expect(pool.numMax()).to.equal(4);
           expect(pool.numUsed()).to.equal(1);
           expect(pool.numFree()).to.equal(1);
+          expect(pool.numRemainingCapacity()).to.equal(3);
 
           done();
         })
@@ -1896,6 +1994,8 @@ describe('Tarn', () => {
 
           expect(createCalled).to.equal(4);
           expect(destroyCalled).to.equal(2);
+          expect(pool.numMin()).to.equal(0);
+          expect(pool.numMax()).to.equal(4);
           expect(pool.numFree() + pool.numUsed()).to.equal(2);
           done();
         })
