@@ -1255,6 +1255,46 @@ describe('Tarn', () => {
         });
     });
 
+    it('should reject acquires immediately after pool has been destroyed', () => {
+      let createCalled = 0;
+      let acquireFailCalled = 0;
+
+      pool = new Pool({
+        create() {
+          ++createCalled;
+          return Promise.resolve({});
+        },
+        destroy() {},
+        min: 0,
+        max: 1,
+        acquireTimeoutMillis: 1000
+      });
+
+      return pool.destroy().then(() => {
+        pool.on('acquireFail', (eventId, err) => {
+          ++acquireFailCalled;
+          expect(err.message).to.equal('aborted');
+        });
+
+        const started = Date.now();
+        const pendingAcquire = pool.acquire();
+
+        expect(pool.numPendingAcquires()).to.equal(0);
+
+        return pendingAcquire.promise
+          .then(() => {
+            throw new Error('should not acquire from a destroyed pool');
+          })
+          .catch(err => {
+            expect(Date.now() - started).to.be.lessThan(100);
+            expect(err.message).to.equal('aborted');
+            expect(acquireFailCalled).to.equal(1);
+            expect(createCalled).to.equal(0);
+            expect(pool.numPendingAcquires()).to.equal(0);
+          });
+      });
+    });
+
     it('should wait asynchronously for all creates to finish, and resources to be returned to the pool', () => {
       let releaseCalled = false;
       let destroyCalled = 0;

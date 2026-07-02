@@ -189,7 +189,6 @@ export class Pool<T> {
     this._executeEventHandlers('acquireRequest', eventId);
 
     const pendingAcquire = new PendingOperation<T>(this.acquireTimeoutMillis);
-    this.pendingAcquires.push(pendingAcquire);
 
     // If the acquire fails for whatever reason
     // remove it from the pending queue.
@@ -203,6 +202,13 @@ export class Pool<T> {
         remove(this.pendingAcquires, pendingAcquire);
         return Promise.reject(err);
       });
+
+    if (this.destroyed) {
+      pendingAcquire.reject(new Error('aborted'));
+      return pendingAcquire;
+    }
+
+    this.pendingAcquires.push(pendingAcquire);
 
     this._tryAcquireOrCreate();
     return pendingAcquire;
